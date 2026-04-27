@@ -1258,28 +1258,8 @@ body {
     <!-- ═══ PRODUCT BUILDER (sender only) ═══ -->
     
 
-    <!-- ═══ LIVE QUOTE TABLE (rendered dynamically) ═══ -->
-    <div id="quoteTableWrap">
-    <table class="quote-line-table">
-      <thead><tr><th style="width:32px"></th><th>Product / Service</th><th class="r">Unit Price</th><th class="r">Qty</th><th class="r">Amount</th></tr></thead>
-      <tbody>
-        <tr>
-      <td><button class="del-btn" onclick="removeItem(1)" title="Remove"></button></td>
-      <td class="product-cell"><strong> ePB® Books</strong><small>Subscription · Monthly</small></td>
-      <td class="r"><input type="number" value="4895" min="0" step="0.01" style="width:80px;font-family:monospace;font-size:13px;padding:4px 6px;border:1px solid var(--rule);border-radius:4px;text-align:right" onchange="updateItemField(1,'price',this.value)"> <span style="font-size:11px;color:var(--ink-3)">/ mo</span></td>
-      <td class="r"><input type="number" value="3" min="1" style="width:55px;font-family:monospace;font-size:13px;padding:4px 6px;border:1px solid var(--rule);border-radius:4px;text-align:center" onchange="updateItemField(1,'count',this.value)"></td>
-      <td class="r">$14,685.00</td>
-    </tr>
-        <tr class="subtotal-row">
-          <td></td><td>Subtotal</td><td class="r" colspan="2"></td><td class="r">$14,685.00</td>
-        </tr>
-        
-        <tr class="total-row">
-          <td></td><td>Grand Total</td><td class="r" colspan="2"></td><td class="r">$14,685.00</td>
-        </tr>
-      </tbody>
-    </table></div>
-
+<!-- ═══ LIVE QUOTE TABLE (rendered dynamically — sender only) ═══ -->
+<div id="quoteTableWrap"></div>
     <!-- ═══ PAYMENT OPTIONS TABLE (rendered dynamically) ═══ -->
     <div id="paymentOptionsWrap" style="margin-top:28px">
     <div class="payment-matrix">
@@ -1910,7 +1890,19 @@ function renderQuoteTable() {
   const lineTotal = quoteItems.reduce((s,i) => s + (i.price * i.count), 0);
   const discountAmt = lineTotal * (discountPct/100);
   const grandTotal  = lineTotal - discountAmt;
-
+  // In recipient mode, hide the itemized price/qty table — show only payment options
+  if (!isSender) {
+    wrap.innerHTML = '';
+    const ci = $('c_invest');
+    if(ci) { ci.value = grandTotal.toFixed(2); calcROI(); }
+    renderPaymentOptions(grandTotal);
+    const crWrap = $('creditRowWrap');
+    if(crWrap) {
+      crWrap.style.display = credit > 0 ? '' : 'none';
+      setText('d_credit', fmt(credit));
+    }
+    return;
+  }
   // Line item rows
   const cycleLabel = c => ({monthly:'/ mo', annual:'/ yr', onetime:'one-time'}[c]||'');
   const licenseLabel = l => ({subscription:'Subscription', perpetual:'Perpetual License', onetime:'One-Time', included:'Included'}[l]||l);

@@ -1691,6 +1691,14 @@ function updatePPOSPrice(id) {
   if(priceEl) priceEl.value = price.toFixed(2);
 }
 
+function toggleIncludedFields(id) {
+  const isIncluded = v(`af_license_${id}`) === 'included';
+  const cycleWrap = document.getElementById(`af_cycle_wrap_${id}`);
+  const priceWrap = document.getElementById(`af_price_wrap_${id}`);
+  if (cycleWrap) cycleWrap.style.display = isIncluded ? 'none' : '';
+  if (priceWrap) priceWrap.style.display = isIncluded ? 'none' : '';
+}
+
 function renderAddItemFields() {
   const wrap = $('addItemFields');
   if(!wrap) return;
@@ -1748,14 +1756,14 @@ function renderAddItemFields() {
       </div>` : `
       <div class="sf">
         <label>License Type</label>
-        <select id="af_license_${id}">
+        <select id="af_license_${id}" onchange="toggleIncludedFields('${id}')">
           <option value="subscription">Subscription</option>
           <option value="perpetual">Perpetual</option>
           <option value="onetime">One-Time Fee</option>
           <option value="included">Included</option>
         </select>
       </div>
-      <div class="sf">
+      <div class="sf" id="af_cycle_wrap_${id}">
         <label>Billing Cycle</label>
         <select id="af_cycle_${id}">
           <option value="monthly">Monthly</option>
@@ -1763,7 +1771,7 @@ function renderAddItemFields() {
           <option value="onetime">One-Time</option>
         </select>
       </div>
-      <div class="sf">
+      <div class="sf" id="af_price_wrap_${id}">
         <label>List Price ($)</label>
         <input type="number" id="af_price_${id}" value="" placeholder="0.00" min="0" step="0.01">
       </div>
@@ -1795,8 +1803,9 @@ function commitProducts() {
     if(!p) return;
     const variant  = v(`af_variant_${id}`)  || p.name;
     const license  = p.customFields==='platformpos' ? 'subscription' : (v(`af_license_${id}`) || 'subscription');
-    const cycle    = p.customFields==='platformpos' ? 'monthly' : (v(`af_cycle_${id}`) || 'monthly');
-    const price    = parseFloat(v(`af_price_${id}`) || 0);
+    const isIncluded = license === 'included';
+    const cycle    = p.customFields==='platformpos' ? 'monthly' : (isIncluded ? 'included' : (v(`af_cycle_${id}`) || 'monthly'));
+    const price    = isIncluded ? 0 : parseFloat(v(`af_price_${id}`) || 0);
     const count    = parseInt(v(`af_count_${id}`) || 1);
     const notes    = v(`af_notes_${id}`) || '';
 
@@ -1946,20 +1955,29 @@ function renderQuoteTable() {
   const licenseLabel = l => ({subscription:'Subscription', perpetual:'Perpetual License', onetime:'One-Time', included:'Included'}[l]||l);
 
   const rows = quoteItems.map(item => {
+    const isIncluded = item.license === 'included';
     const lineAmt = item.price * item.count;
     const delBtn  = isSender ? `<button class="del-btn" onclick="removeItem(${item._id})" title="Remove"></button>` : '';
-    const priceCell = isSender
-      ? `<input type="number" value="${item.price}" min="0" step="0.01" style="width:80px;font-family:monospace;font-size:13px;padding:4px 6px;border:1px solid var(--rule);border-radius:4px;text-align:right" onchange="updateItemField(${item._id},'price',this.value)">`
-      : fmt(item.price);
+    const priceCell = isIncluded
+      ? `<span style="font-size:12px;font-weight:700;color:var(--green)">Included</span>`
+      : isSender
+        ? `<input type="number" value="${item.price}" min="0" step="0.01" style="width:80px;font-family:monospace;font-size:13px;padding:4px 6px;border:1px solid var(--rule);border-radius:4px;text-align:right" onchange="updateItemField(${item._id},'price',this.value)">`
+        : fmt(item.price);
     const countCell = isSender
       ? `<input type="number" value="${item.count}" min="1" style="width:55px;font-family:monospace;font-size:13px;padding:4px 6px;border:1px solid var(--rule);border-radius:4px;text-align:center" onchange="updateItemField(${item._id},'count',this.value)">`
       : item.count;
+    const amountCell = isIncluded
+      ? `<span style="font-size:12px;font-weight:700;color:var(--green)">Included</span>`
+      : fmt(lineAmt);
+    const descLine = isIncluded
+      ? `Included${item.notes ? ' · ' + item.notes : ''}`
+      : `${licenseLabel(item.license)} · ${item.cycle==='onetime'?'One-Time':item.cycle==='annual'?'Annual':'Monthly'}${item.notes?' · '+item.notes:''}`;
     return `<tr>
       <td>${delBtn}</td>
-      <td class="product-cell"><strong>${item.icon} ${item.name}</strong><small>${licenseLabel(item.license)} · ${item.cycle==='onetime'?'One-Time':item.cycle==='annual'?'Annual':'Monthly'}${item.notes?' · '+item.notes:''}</small></td>
-      <td class="r">${priceCell} <span style="font-size:11px;color:var(--ink-3)">${cycleLabel(item.cycle)}</span></td>
+      <td class="product-cell"><strong>${item.icon} ${item.name}</strong><small>${descLine}</small></td>
+      <td class="r">${priceCell}${isIncluded ? '' : ` <span style="font-size:11px;color:var(--ink-3)">${cycleLabel(item.cycle)}</span>`}</td>
       <td class="r">${countCell}</td>
-      <td class="r">${fmt(lineAmt)}</td>
+      <td class="r">${amountCell}</td>
     </tr>`;
   }).join('');
 

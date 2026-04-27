@@ -1,0 +1,2272 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Success Systems — Proposal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&amp;family=Source+Sans+3:ital,wght@0,300;0,400;0,600;0,700;1,400&amp;family=Source+Serif+4:ital,wght@0,400;0,600;1,400&amp;display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════
+   TOKENS
+═══════════════════════════════════════════ */
+:root {
+  --teal:       #1e7b74;
+  --teal-dark:  #155c57;
+  --teal-mid:   #2a9d94;
+  --teal-light: #e6f4f3;
+  --teal-pale:  #f0f9f8;
+  --navy:       #1a2332;
+  --navy-2:     #243042;
+  --ink:        #1c1f26;
+  --ink-2:      #3a3f4a;
+  --ink-3:      #6b7280;
+  --rule:       #d5dde5;
+  --paper:      #ffffff;
+  --paper-bg:   #f5f6f8;
+  --amber:      #92400e;
+  --amber-bg:   #fffbeb;
+  --red:        #991b1b;
+  --red-bg:     #fef2f2;
+  --green:      #166534;
+  --green-bg:   #f0fdf4;
+
+  --doc-width:  900px;
+  --page-pad:   56px;
+
+  --font-head:  'Playfair Display', Georgia, serif;
+  --font-body:  'Source Sans 3', system-ui, sans-serif;
+  --font-serif: 'Source Serif 4', Georgia, serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--ink);
+  background: var(--paper-bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ═══════════════════════════════════════════
+   TOOLBAR (screen only)
+═══════════════════════════════════════════ */
+.toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--navy);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 24px;
+  box-shadow: 0 2px 12px rgba(0,0,0,.25);
+}
+.toolbar-logo {
+  font-family: var(--font-head);
+  font-size: 14px;
+  color: #a5d8d5;
+  letter-spacing: .03em;
+  margin-right: 8px;
+}
+.toolbar-sep { width: 1px; height: 22px; background: rgba(255,255,255,.15); }
+.mode-pill {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  padding: 4px 12px;
+  border-radius: 999px;
+}
+.mode-pill.sender   { background: #d97706; color: #fff; }
+.mode-pill.recipient{ background: rgba(255,255,255,.12); color: rgba(255,255,255,.75); border: 1px solid rgba(255,255,255,.2); }
+.toolbar-spacer { flex: 1; }
+.tbtn {
+  padding: 7px 16px;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  font-family: var(--font-body);
+  transition: background .15s, transform .1s;
+}
+.tbtn:hover { transform: translateY(-1px); }
+.tbtn-primary { background: var(--teal); color: #fff; }
+.tbtn-primary:hover { background: var(--teal-dark); }
+.tbtn-ghost { background: rgba(255,255,255,.1); color: #fff; border: 1px solid rgba(255,255,255,.2); }
+.tbtn-ghost:hover { background: rgba(255,255,255,.18); }
+.tbtn-warn { background: #b45309; color: #fff; }
+.tbtn-warn:hover { background: #92400e; }
+
+/* ═══════════════════════════════════════════
+   DOCUMENT SHELL
+═══════════════════════════════════════════ */
+.doc-wrap {
+  max-width: calc(var(--doc-width) + 80px);
+  margin: 32px auto 64px;
+  padding: 0 40px;
+}
+
+.page {
+  background: var(--paper);
+  max-width: var(--doc-width);
+  margin: 0 auto 28px;
+  box-shadow: 0 4px 32px rgba(0,0,0,.10), 0 1px 4px rgba(0,0,0,.06);
+  position: relative;
+  overflow: hidden;
+}
+
+/* decorative arc like PDF */
+.page::before {
+  content: '';
+  position: absolute;
+  top: -120px;
+  left: -120px;
+  width: 420px;
+  height: 420px;
+  border-radius: 50%;
+  border: 80px solid var(--paper-bg);
+  opacity: .65;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.page-inner {
+  position: relative;
+  z-index: 1;
+  padding: var(--page-pad);
+}
+
+/* footer bar like PDF */
+.page-footer {
+  background: var(--navy);
+  color: rgba(255,255,255,.72);
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 10px var(--page-pad);
+  position: relative;
+  z-index: 1;
+}
+.page-footer span::before { content: '●'; margin-right: 8px; font-size: 7px; vertical-align: middle; opacity: .5; }
+.page-footer span:first-child::before { display: none; }
+
+/* ═══════════════════════════════════════════
+   COVER PAGE
+═══════════════════════════════════════════ */
+.cover { padding: calc(var(--page-pad) * 1.4) var(--page-pad) var(--page-pad); }
+
+.cover-logo-area {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 40px;
+}
+.barcode-logo {
+  background: var(--teal-light);
+  border: 2px solid var(--teal);
+  border-radius: 12px;
+  padding: 20px 36px;
+  text-align: center;
+}
+.barcode-text {
+  font-family: 'Courier New', monospace;
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: .12em;
+  color: var(--teal-dark);
+  display: block;
+  border: 2px solid var(--teal-dark);
+  padding: 6px 20px 4px;
+  margin-bottom: 6px;
+}
+.barcode-num {
+  font-family: monospace;
+  font-size: 13px;
+  color: var(--ink-3);
+  letter-spacing: .08em;
+}
+
+.cover-title {
+  font-family: var(--font-head);
+  font-size: 22px;
+  font-weight: 700;
+  text-align: center;
+  color: var(--ink);
+  margin-bottom: 32px;
+}
+.cover-title em { font-style: italic; font-weight: 400; color: var(--teal-dark); }
+
+.cover-meta {
+  text-align: center;
+  margin-bottom: 36px;
+}
+.cover-to {
+  font-size: 15px;
+  color: var(--ink-3);
+  margin-bottom: 4px;
+}
+.cover-name {
+  font-family: var(--font-head);
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 20px;
+}
+.cover-by {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--teal-dark);
+  margin-bottom: 2px;
+}
+.cover-contact {
+  font-size: 13px;
+  color: var(--ink-3);
+  margin-top: 10px;
+}
+
+/* ═══════════════════════════════════════════
+   SECTION HEADINGS (matches PDF bold-center style)
+═══════════════════════════════════════════ */
+.sec-head {
+  font-family: var(--font-head);
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--ink);
+  text-align: center;
+  margin-bottom: 20px;
+  padding-bottom: 14px;
+  border-bottom: 2.5px solid var(--teal);
+}
+.sec-head.left { text-align: left; font-size: 22px; border-bottom: none; padding-bottom: 0; margin-bottom: 14px; }
+
+.sub-head {
+  font-family: var(--font-body);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 22px 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.sub-head::after { content: ''; flex: 1; height: 1px; background: var(--rule); }
+
+/* ═══════════════════════════════════════════
+   BODY PROSE
+═══════════════════════════════════════════ */
+.prose { font-size: 14.5px; color: var(--ink-2); line-height: 1.72; margin-bottom: 14px; font-weight: 300; }
+.prose strong { font-weight: 700; color: var(--ink); }
+.prose.center { text-align: center; max-width: 680px; margin-left: auto; margin-right: auto; }
+
+/* ═══════════════════════════════════════════
+   CUSTOMER QUOTES (italic centered like PDF)
+═══════════════════════════════════════════ */
+.quotes-block { margin: 28px 0; display: grid; gap: 20px; }
+.quote-item { text-align: center; }
+.quote-text {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 16px;
+  color: var(--ink);
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.quote-attr {
+  font-size: 13px;
+  color: var(--ink-3);
+  font-style: italic;
+}
+
+/* ═══════════════════════════════════════════
+   CORPORATE RELATIONSHIPS
+═══════════════════════════════════════════ */
+.corp-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; margin: 20px 0; }
+.corp-block { }
+.corp-block-title { font-weight: 700; font-size: 14px; color: var(--ink); margin-bottom: 8px; text-align: right; }
+.corp-logo-area {
+  background: var(--teal-pale);
+  border: 1px solid var(--teal-light);
+  border-radius: 8px;
+  padding: 14px;
+  min-height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+.corp-logo-area .logo-names {
+  font-size: 11px;
+  color: var(--teal-dark);
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.8;
+}
+
+/* ═══════════════════════════════════════════
+   ROI WORKSHEET (matches the PDF table style exactly)
+═══════════════════════════════════════════ */
+.roi-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+  margin: 16px 0 24px;
+}
+.roi-table th {
+  background: var(--navy-2);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 10px 12px;
+  text-align: center;
+  border: 1px solid rgba(255,255,255,.1);
+}
+.roi-table th:first-child { text-align: left; }
+.roi-table td {
+  border: 1px solid var(--rule);
+  padding: 10px 12px;
+  vertical-align: middle;
+  text-align: center;
+  color: var(--ink-2);
+}
+.roi-table td:first-child { text-align: left; font-weight: 600; color: var(--ink); background: #fafbfc; }
+.roi-table td.formula { font-size: 13px; color: var(--ink-3); font-family: monospace; }
+.roi-table td.result { font-weight: 700; color: var(--green); }
+.roi-table td.result.total { background: var(--green-bg); font-size: 15px; }
+.roi-table td.investment-row { font-weight: 700; color: var(--navy); }
+.roi-table td.roi-row { font-weight: 800; color: var(--teal); font-size: 16px; }
+.roi-table tr.divider td { background: var(--teal-light); font-weight: 700; font-size: 13px; color: var(--teal-dark); }
+
+.roi-input {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--green);
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: center;
+}
+.roi-input:focus { outline: 2px solid var(--teal); border-radius: 4px; background: var(--teal-light); }
+
+/* ═══════════════════════════════════════════
+   SAAS COMPARISON TABLE
+═══════════════════════════════════════════ */
+.saas-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+  margin: 16px 0;
+}
+.saas-table th {
+  padding: 12px 16px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+}
+.saas-table th.feature-col { text-align: left; background: var(--navy-2); color: #fff; width: 52%; }
+.saas-table th.inhouse { background: #4b5563; color: #fff; }
+.saas-table th.cloud { background: var(--teal); color: #fff; }
+.saas-table td { border: 1px solid var(--rule); padding: 10px 16px; font-size: 13px; color: var(--ink-2); }
+.saas-table td.check { text-align: center; font-size: 15px; font-weight: 700; }
+.saas-table td.yes { color: var(--green); background: var(--green-bg); }
+.saas-table td.no  { color: var(--red);   background: var(--red-bg); }
+.saas-table tr:nth-child(even) td { background: #fafbfc; }
+
+/* ═══════════════════════════════════════════
+   PRODUCT DETAIL BLOCKS (PDF style: bold product name + description)
+═══════════════════════════════════════════ */
+.product-block { margin-bottom: 22px; padding-bottom: 22px; border-bottom: 1px solid var(--rule); }
+.product-block:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+.product-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.product-name {
+  font-size: 21px;
+  font-weight: 900;
+  color: var(--ink);
+  font-family: var(--font-body);
+  letter-spacing: -.01em;
+}
+.product-sub {
+  font-size: 15px;
+  font-style: italic;
+  color: var(--teal-dark);
+  font-weight: 400;
+}
+.product-desc { font-size: 14px; color: var(--ink-2); line-height: 1.7; margin-top: 8px; }
+.product-features { list-style: none; margin-top: 10px; display: grid; gap: 6px; }
+.product-features li {
+  display: flex;
+  gap: 10px;
+  font-size: 13.5px;
+  color: var(--ink-2);
+  padding-left: 2px;
+}
+.product-features li::before {
+  content: '•';
+  color: var(--teal);
+  font-size: 16px;
+  line-height: 1.4;
+  flex-shrink: 0;
+}
+.product-link { font-size: 12px; color: var(--teal); margin-top: 6px; display: block; text-decoration: none; }
+.product-link:hover { text-decoration: underline; }
+
+/* icon chips for products */
+.product-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  float: right;
+  margin: 0 0 12px 20px;
+}
+.icon-teal   { background: var(--teal-light); }
+.icon-navy   { background: #e8ecf4; }
+.icon-amber  { background: #fef3c7; }
+.icon-green  { background: var(--green-bg); }
+
+/* ═══════════════════════════════════════════
+   CONFIG & PRICING TABLE (matches PDF exact layout)
+═══════════════════════════════════════════ */
+.config-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin-top: 12px;
+}
+.config-table th {
+  background: var(--navy-2);
+  color: #fff;
+  padding: 10px 14px;
+  text-align: left;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: .03em;
+}
+.config-table th:last-child { text-align: right; width: 160px; }
+.config-table td {
+  border-bottom: 1px solid var(--rule);
+  padding: 14px;
+  vertical-align: top;
+  color: var(--ink-2);
+  line-height: 1.6;
+}
+.config-table td:last-child { text-align: right; font-weight: 700; color: var(--teal-dark); white-space: nowrap; }
+.config-table td strong { display: block; color: var(--ink); font-weight: 700; margin-bottom: 4px; font-size: 14px; }
+.config-table td ul { list-style: none; margin: 6px 0 0; }
+.config-table td ul li { font-size: 12.5px; color: var(--ink-3); padding: 1px 0 1px 12px; position: relative; }
+.config-table td ul li::before { content: '•'; position: absolute; left: 0; color: var(--teal); }
+.config-table tr:last-child td { border-bottom: none; }
+
+/* pricing plan matrix (PDF page 15) */
+.plan-section { margin: 20px 0 0; }
+.plan-section-head {
+  background: var(--teal);
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+  padding: 9px 14px;
+  border-radius: 4px 4px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.plan-section-head.navy { background: var(--navy-2); }
+.plan-section-head.teal-dark { background: var(--teal-dark); }
+
+.plan-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+.plan-table th {
+  background: #e8f4f3;
+  color: var(--teal-dark);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  padding: 8px 12px;
+  text-align: left;
+  border: 1px solid var(--teal-light);
+}
+.plan-table td {
+  border: 1px solid var(--rule);
+  padding: 10px 12px;
+  color: var(--ink-2);
+  vertical-align: middle;
+}
+.plan-table td.mono { font-family: monospace; font-weight: 700; color: var(--ink); font-size: 13px; }
+.plan-table td.highlight { font-weight: 700; color: var(--teal-dark); }
+.plan-table tr:nth-child(even) td { background: #fafbfc; }
+.plan-table td.na { color: var(--ink-3); font-style: italic; }
+
+.credit-row {
+  background: var(--amber-bg);
+  border: 1px solid #fcd34d;
+  border-radius: 6px;
+  padding: 12px 14px;
+  font-size: 13.5px;
+  color: var(--amber);
+  font-weight: 600;
+  margin-top: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* ═══════════════════════════════════════════
+   PAYMENT TERMS
+═══════════════════════════════════════════ */
+.terms-list { list-style: none; display: grid; gap: 0; }
+.terms-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  font-size: 14px;
+  color: var(--ink-2);
+  padding: 12px 0;
+  border-bottom: 1px solid var(--rule);
+  line-height: 1.65;
+}
+.terms-list li:last-child { border-bottom: none; }
+
+.agreement-block {
+  background: var(--teal-pale);
+  border: 1.5px solid var(--teal-light);
+  border-radius: 10px;
+  padding: 20px;
+  margin-top: 24px;
+}
+.agreement-title { font-weight: 700; font-size: 15px; margin-bottom: 12px; color: var(--ink); }
+.agreement-list { list-style: none; display: grid; gap: 8px; counter-reset: alist; }
+.agreement-list li {
+  display: flex;
+  gap: 12px;
+  font-size: 14px;
+  color: var(--ink-2);
+  counter-increment: alist;
+}
+.agreement-list li::before {
+  content: counter(alist) '.';
+  color: var(--teal);
+  font-weight: 700;
+  flex-shrink: 0;
+  min-width: 18px;
+}
+
+/* ═══════════════════════════════════════════
+   SENDER EDIT CONTROLS (screen only, hide on print)
+═══════════════════════════════════════════ */
+.sender-panel {
+  background: linear-gradient(135deg, #fffbf0 0%, #fff8e5 100%);
+  border: 2px solid #f59e0b;
+  border-radius: 10px;
+  padding: 18px 20px;
+  margin-bottom: 24px;
+}
+.sender-panel-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: #92400e;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sender-panel-title::before { content: ''; font-size: 14px; }
+.sender-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px 16px; }
+.sender-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+.sender-grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
+
+.sf { }
+.sf label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: #78350f;
+  margin-bottom: 5px;
+}
+.sf input, .sf select, .sf textarea {
+  width: 100%;
+  padding: 8px 11px;
+  border: 1.5px solid #fcd34d;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: var(--font-body);
+  background: #fff;
+  color: var(--ink);
+  transition: border-color .15s, box-shadow .15s;
+}
+.sf input:focus, .sf select:focus, .sf textarea:focus {
+  outline: none;
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 3px rgba(245,158,11,.15);
+}
+.sf select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2392400e'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 30px; appearance: none; }
+
+/* editable inline fields in document body */
+.doc-field {
+  display: inline;
+  border-bottom: 1.5px dashed var(--teal-mid);
+  min-width: 60px;
+  cursor: text;
+  color: var(--ink);
+}
+.doc-field:focus { outline: none; background: var(--teal-light); border-bottom-style: solid; border-radius: 3px 3px 0 0; }
+.locked .doc-field { border-bottom-color: transparent; cursor: default; pointer-events: none; }
+
+/* status badges */
+.status-wrap { display: flex; gap: 8px; align-items: center; margin-top: 14px; flex-wrap: wrap; }
+.badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 12px; border-radius: 999px;
+  font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+}
+.badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; display: block; }
+.badge.valid   { background: var(--green-bg); color: var(--green); }
+.badge.valid::before { background: var(--green); }
+.badge.expired { background: var(--red-bg);   color: var(--red); }
+.badge.expired::before { background: var(--red); }
+.badge.edit    { background: #fef3c7; color: #92400e; }
+.badge.edit::before { background: #f59e0b; }
+
+/* ═══════════════════════════════════════════
+   ROI CALCULATOR SIDEBAR (floating, screen only)
+═══════════════════════════════════════════ */
+.doc-outer { display: flex; gap: 28px; align-items: flex-start; max-width: 1300px; margin: 0 auto; padding: 32px 32px 64px; }
+.doc-main { flex: 1; min-width: 0; }
+.calc-aside {
+  width: 320px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 62px;
+  background: var(--navy);
+  border-radius: 16px;
+  padding: 22px;
+  color: #fff;
+  box-shadow: 0 12px 40px rgba(0,0,0,.2);
+}
+.calc-title {
+  font-family: var(--font-head);
+  font-size: 19px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.calc-note { font-size: 12px; color: rgba(255,255,255,.45); margin-bottom: 18px; line-height: 1.55; }
+.calc-label {
+  font-size: 10.5px; font-weight: 700; letter-spacing: .08em;
+  text-transform: uppercase; color: rgba(255,255,255,.4);
+  display: block; margin-bottom: 5px; margin-top: 10px;
+}
+.calc-label:first-child { margin-top: 0; }
+.calc-input {
+  width: 100%; padding: 8px 10px;
+  background: rgba(255,255,255,.07); border: 1.5px solid rgba(255,255,255,.12);
+  border-radius: 6px; font-size: 13px; font-family: monospace;
+  color: #fff; transition: border-color .15s, background .15s;
+}
+.calc-input:focus { outline: none; border-color: var(--teal-mid); background: rgba(30,123,116,.2); }
+.calc-result {
+  background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1);
+  border-radius: 10px; padding: 14px; margin-top: 14px;
+}
+.calc-result-label { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: rgba(255,255,255,.38); margin-bottom: 3px; }
+.calc-big { font-family: var(--font-head); font-size: 26px; color: #7ee8df; line-height: 1.1; }
+.calc-big.neutral { color: #fff; }
+.calc-sub { font-size: 11.5px; color: rgba(255,255,255,.4); margin-top: 3px; }
+.calc-breakdown { margin-top: 12px; display: grid; gap: 5px; }
+.calc-row { display: flex; justify-content: space-between; font-size: 12px; }
+.calc-row span:first-child { color: rgba(255,255,255,.45); }
+.calc-row span:last-child { font-family: monospace; color: #fff; font-size: 11.5px; }
+.calc-divider { height: 1px; background: rgba(255,255,255,.08); margin: 6px 0; }
+.calc-recs { margin-top: 10px; font-size: 11.5px; color: rgba(255,255,255,.5); line-height: 1.6; }
+.calc-recs li { margin-bottom: 5px; padding-left: 12px; position: relative; }
+.calc-recs li::before { content: '→'; position: absolute; left: 0; color: var(--teal-mid); font-size: 10px; line-height: 1.8; }
+.calc-actions { display: flex; gap: 8px; margin-top: 16px; }
+.calc-btn {
+  flex: 1; padding: 10px 12px; border-radius: 7px;
+  font-size: 13px; font-weight: 700; cursor: pointer; border: none;
+  font-family: var(--font-body); transition: background .15s;
+}
+.calc-btn-primary { background: var(--teal); color: #fff; }
+.calc-btn-primary:hover { background: var(--teal-dark); }
+.calc-btn-ghost { background: rgba(255,255,255,.09); color: rgba(255,255,255,.75); border: 1px solid rgba(255,255,255,.15); }
+.calc-btn-ghost:hover { background: rgba(255,255,255,.15); }
+.calc-btn:disabled { opacity: .35; cursor: not-allowed; }
+
+/* ═══════════════════════════════════════════
+   PRINT
+═══════════════════════════════════════════ */
+/* CATALOG GRID & PRODUCT BUILDER */
+.catalog-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; }
+.catalog-chip { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border: 1.5px solid #fcd34d; border-radius: 8px; background: #fff; cursor: pointer; transition: background .12s, border-color .12s; font-size: 13px; font-weight: 500; color: var(--ink); user-select: none; }
+.catalog-chip:hover { background: #fffbf0; border-color: #f59e0b; }
+.catalog-chip.selected { background: #fef3c7; border-color: #f59e0b; }
+.catalog-chip input[type=checkbox] { accent-color: #f59e0b; width: 15px; height: 15px; flex-shrink: 0; pointer-events: none; }
+.catalog-chip .chip-icon { font-size: 16px; }
+.catalog-chip .chip-name { line-height: 1.3; }
+.catalog-chip .chip-variant { font-size: 11px; color: var(--ink-3); display: block; }
+.add-item-row { background: #fff; border: 1.5px solid #fcd34d; border-radius: 8px; padding: 14px 16px; margin-bottom: 10px; }
+.add-item-row-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.add-item-row-name { font-weight: 700; font-size: 14px; color: var(--ink); flex: 1; }
+.add-item-row-icon { font-size: 18px; }
+.add-item-fields { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px 14px; }
+.quote-line-table { width: 100%; border-collapse: collapse; font-size: 13.5px; margin-top: 12px; }
+.quote-line-table th { background: var(--navy-2); color: #fff; padding: 10px 14px; text-align: left; font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+.quote-line-table th.r { text-align: right; }
+.quote-line-table td { border-bottom: 1px solid var(--rule); padding: 12px 14px; vertical-align: middle; color: var(--ink-2); }
+.quote-line-table td.r { text-align: right; font-family: monospace; font-size: 13px; }
+.quote-line-table tr:last-child td { border-bottom: none; }
+.quote-line-table .product-cell strong { display: block; font-size: 14px; color: var(--ink); }
+.quote-line-table .product-cell small { font-size: 12px; color: var(--ink-3); }
+.quote-line-table .subtotal-row td { background: #f7f9fb; font-weight: 700; color: var(--ink); }
+.quote-line-table .discount-row td { background: var(--green-bg); color: var(--green); font-weight: 700; }
+.quote-line-table .total-row td { background: var(--teal-light); font-weight: 800; font-size: 14px; color: var(--teal-dark); border-top: 2px solid var(--teal); }
+.quote-line-table .del-btn { background: none; border: none; cursor: pointer; color: var(--red); font-size: 15px; padding: 2px 6px; opacity: .5; transition: opacity .15s; }
+.quote-line-table .del-btn:hover { opacity: 1; }
+.payment-matrix { margin-top: 6px; overflow-x: auto; }
+.payment-matrix-head { background: var(--teal); color: #fff; font-weight: 700; font-size: 13px; padding: 10px 14px; border-radius: 6px 6px 0 0; }
+.payment-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.payment-table th { background: #e8f4f3; color: var(--teal-dark); font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; padding: 9px 12px; border: 1px solid var(--teal-light); text-align: left; }
+.payment-table th.r { text-align: right; }
+.payment-table td { border: 1px solid var(--rule); padding: 10px 12px; color: var(--ink-2); }
+.payment-table td.r { text-align: right; font-family: monospace; font-weight: 600; }
+.payment-table tr:nth-child(even) td { background: #fafbfc; }
+.payment-table .opt-label { font-weight: 700; color: var(--teal-dark); }
+.payment-table .opt-total { font-weight: 800; color: var(--navy); }
+.payment-table .opt-edit { font-size: 12px; color: var(--ink-3); font-style: italic; display: block; }
+.empty-quote { text-align: center; padding: 32px 20px; background: var(--paper-bg); border: 2px dashed var(--rule); border-radius: 10px; color: var(--ink-3); font-size: 14px; margin-top: 14px; }
+.empty-quote .eq-icon { font-size: 32px; margin-bottom: 10px; }
+
+/* PlatformPOS tier selector */
+.ppos-tier-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  margin-top: 4px;
+}
+.ppos-tier-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 8px;
+  border: 2px solid #fcd34d;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+  transition: all .15s;
+  text-align: center;
+  user-select: none;
+}
+.ppos-tier-chip input[type=radio] { display: none; }
+.ppos-tier-chip .tier-name { font-weight: 700; font-size: 13px; color: var(--ink); }
+.ppos-tier-chip .tier-price { font-size: 11px; color: var(--ink-3); font-family: monospace; }
+.ppos-tier-chip:hover { background: #fffbf0; border-color: #f59e0b; }
+.ppos-tier-chip.selected { background: #fef3c7; border-color: #f59e0b; box-shadow: 0 0 0 2px rgba(245,158,11,.2); }
+.ppos-tier-chip.selected .tier-name { color: #92400e; }
+.ppos-tier-chip.selected .tier-price { color: #b45309; }
+.tier-includes-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; padding: 10px; background: var(--teal-pale); border-radius: 6px; border: 1px solid var(--teal-light); }
+.tier-tag { display: inline-block; padding: 3px 10px; background: var(--teal-light); color: var(--teal-dark); border-radius: 999px; font-size: 11.5px; font-weight: 600; }
+@media (max-width: 680px) { .ppos-tier-grid { grid-template-columns: repeat(3, 1fr); } }
+
+/* ── QUOTE BUILDER SECTIONS ─────────────────────────────────── */
+.builder-section {
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1.5px solid #fcd34d;
+}
+.builder-section:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+.builder-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: #92400e;
+  margin-bottom: 10px;
+}
+.builder-sub-head {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: #78350f;
+  margin-bottom: 10px;
+}
+.builder-add-btn {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1.5px solid #f59e0b;
+  background: #fff;
+  color: #92400e;
+  cursor: pointer;
+  letter-spacing: .02em;
+  transition: background .12s;
+}
+.builder-add-btn:hover { background: #fef3c7; }
+.builder-empty {
+  font-size: 13px;
+  color: #b45309;
+  opacity: .65;
+  font-style: italic;
+  padding: 8px 0;
+}
+
+/* ── BUILDER ITEM ROWS ───────────────────────────────────────── */
+.builder-item-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto auto auto;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: #fff;
+  border: 1.5px solid #fcd34d;
+  border-radius: 8px;
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+.builder-item-name {
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.builder-item-input {
+  width: 80px;
+  padding: 5px 7px;
+  border: 1px solid #fcd34d;
+  border-radius: 5px;
+  font-size: 12px;
+  font-family: monospace;
+  text-align: right;
+  background: #fffbf0;
+}
+.builder-item-label {
+  font-size: 11px;
+  color: #78350f;
+  white-space: nowrap;
+}
+.builder-item-del {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--red);
+  font-size: 16px;
+  padding: 2px 4px;
+  opacity: .5;
+  transition: opacity .12s;
+  line-height: 1;
+}
+.builder-item-del:hover { opacity: 1; }
+
+/* ── PAYMENT SLOT ROWS (revised) ────────────────────────────── */
+.pslot-row {
+  display: grid;
+  grid-template-columns: 160px 1fr auto;
+  align-items: start;
+  gap: 10px;
+  padding: 10px 12px;
+  background: #fff;
+  border: 1.5px solid #fcd34d;
+  border-radius: 8px;
+  margin-bottom: 6px;
+}
+.pslot-row.off { opacity: .45; background: #f9fafb; border-color: #e5e7eb; }
+.pslot-extra { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.pslot-extra label { font-size: 11px; color: #78350f; white-space: nowrap; }
+.pslot-extra input { width: 80px; padding: 5px 7px; border: 1px solid #fcd34d; border-radius: 5px; font-size: 12px; font-family: monospace; background: #fffbf0; }
+.pslot-del {
+  background: none; border: none; cursor: pointer;
+  color: var(--red); font-size: 15px; padding: 2px 4px;
+  opacity: .45; transition: opacity .12s; align-self: center;
+}
+.pslot-del:hover { opacity: 1; }
+
+@media print {
+  .toolbar, .calc-aside, .sender-panel, .doc-outer > *:not(.doc-main) { display: none !important; }
+  body { background: #fff; font-size: 13px; }
+  .doc-wrap, .doc-outer { margin: 0; padding: 0; max-width: 100%; }
+  .doc-main { width: 100%; }
+  .page { box-shadow: none; margin-bottom: 0; page-break-after: always; max-width: 100%; }
+  .page::before { display: none; }
+  .page-inner { padding: 36px 48px; }
+  .page-footer { padding: 8px 48px; }
+}
+
+/* ═══════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════ */
+@media (max-width: 1100px) {
+  .doc-outer { flex-direction: column; padding: 20px; }
+  .calc-aside { width: 100%; position: static; }
+  .sender-grid { grid-template-columns: 1fr 1fr; }
+  .sender-grid.cols-4 { grid-template-columns: 1fr 1fr; }
+  .corp-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 680px) {
+  :root { --page-pad: 24px; }
+  .sender-grid, .sender-grid.cols-2, .sender-grid.cols-4 { grid-template-columns: 1fr; }
+  .plan-table { font-size: 12px; }
+}
+</style>
+<script>
+    // Recipient snapshot — injected at export time
+    window._SNAPSHOT = {"quoteItems":[{"_id":1,"catalogId":"epb","icon":"","name":"ePB® Books","baseName":"ePB® Suite","license":"subscription","cycle":"monthly","price":4895,"count":3,"notes":"","extra":{}}],"discountPct":0,"credit":3570,"paymentCount":3};
+  </script><script>
+    document.addEventListener('DOMContentLoaded', function() {
+      if(window._SNAPSHOT) {
+        quoteItems = _SNAPSHOT.quoteItems;
+        nextItemId = quoteItems.length + 1;
+        if($('s_discount')) $('s_discount').value = _SNAPSHOT.discountPct;
+        if($('s_credit'))   $('s_credit').value   = _SNAPSHOT.credit;
+        if($('s_paymentCount')) $('s_paymentCount').value = _SNAPSHOT.paymentCount;
+      }
+      MODE = 'recipient';
+      applyMode(); syncDoc(); renderQuoteTable(); recalcROI(); calcROI(); updateExpiry();
+    });
+  </script></head>
+<body>
+
+<!-- ═══ TOOLBAR ═══ -->
+
+
+<!-- ═══ DOCUMENT ═══ -->
+<div class="doc-outer">
+<div class="doc-main">
+<div class="doc-wrap">
+
+<!-- ────────────────────────────────────────
+     PAGE 1 — COVER
+──────────────────────────────────────────── -->
+<div class="page">
+  <div class="page-inner cover">
+
+    <!-- SENDER PANEL (edit mode only) -->
+    
+
+    <div class="cover-logo-area">
+      <img src="data:image/jpeg;base64,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" alt="Success Systems" style="max-width:320px;width:100%;height:auto;display:block;margin:0 auto">
+    </div>
+
+    <div class="cover-title">Success Systems Product Proposal — <em>Initial</em></div>
+
+    <div class="cover-meta">
+      <div class="cover-to">Presented To:</div>
+      <div class="cover-name" id="d_name">Moonis Khan</div>
+      <div class="cover-by" id="d_byline">Presented on April 27, 2026 By: <strong>Edward Carley</strong></div>
+      <div class="cover-contact">Tel. 1.800.653.1661 &nbsp;·&nbsp; <a href="https://www.success-systems.com" style="color:var(--teal)">www.success-systems.com</a></div>
+    </div>
+
+    <div class="status-wrap">
+      <span class="badge valid" id="quoteStatusBadge">Valid</span>
+      <span style="font-size:13px;color:var(--ink-3)" id="quoteStatusNote">Quote <strong>SS-MOONIS-2026-001</strong> · 3 stores · Valid through May 27, 2026</span>
+    </div>
+  </div>
+  <div class="page-footer">
+    <span>www.success-systems.com</span>
+    <span>1-800-653-3345</span>
+    <span>mkt@success-systems.com</span>
+  </div>
+</div>
+
+<!-- ────────────────────────────────────────
+     PAGE 2 — COMPANY SUMMARY
+──────────────────────────────────────────── -->
+<div class="page">
+  <div class="page-inner">
+    <h2 class="sec-head">Company Summary</h2>
+
+    <p class="prose">Success Systems® offers the most cost conscious and robust "cloud-based" solutions for grocery stores, convenience stores and traditional gasoline retailers. Success Systems products have been solving the automation needs of our customers for over 40 years. The company believes that understanding the day-to-day pressures of our customers is mission-critical to a successful relationship.</p>
+
+    <p class="prose">Success Systems products are available directly, or through selected distributors. Major oil companies recommend our products. We are certified on virtually all industry POS platforms and offer a unique solution to cut credit card fees by up to one-third. Our products are field proven in virtual branded and unbranded outlets.</p>
+
+    <p class="prose">Retailers who need to improve their store control and profits reach out to us because our focus is to improve the profit and business success of convenience stores, grocery stores, petroleum retailers, liquor and tobacco retailers and their distributors and partners.</p>
+
+    <h3 class="sub-head">Customer Comments</h3>
+
+    <div class="quotes-block">
+      <div class="quote-item">
+        <div class="quote-text">"No more guess work, I can now see my profit and adjust my margins and inventory daily."</div>
+        <div class="quote-attr">— Carl Noonan, Grumpy's</div>
+      </div>
+      <div class="quote-item">
+        <div class="quote-text">"Transparent to my employees, zero training and no ring errors."</div>
+        <div class="quote-attr">— Paul Singh, Roadside Petroleum</div>
+      </div>
+      <div class="quote-item">
+        <div class="quote-text">"It improved my revenue 12 to 15%… it's a rock-solid product."</div>
+        <div class="quote-attr">— Fran Marcoux, Mac's Shell</div>
+      </div>
+    </div>
+
+    <h2 class="sec-head" style="margin-top:36px">Corporate Relationships</h2>
+
+    <div class="corp-grid">
+      <div class="corp-block">
+        <div class="corp-logo-area">
+          <div class="logo-names">Gilbarco Veeder-Root<br>VeriFone<br>Wayne · Comcash</div>
+        </div>
+        <div class="corp-block-title" style="text-align:left">POS Terminal Vendors</div>
+        <p class="prose" style="font-size:13px">Certified as a VeriFone partner and partners with Gilbarco (G-Site and Passport), Wayne (NAMOS), and many others.</p>
+      </div>
+      <div class="corp-block">
+        <div class="corp-logo-area">
+          <div class="logo-names">ExxonMobil · Shell · Citgo<br>Gulf · Amoco · BP<br>Chevron · Sunoco · Valero</div>
+        </div>
+        <div class="corp-block-title" style="text-align:left">Major Oil Companies</div>
+        <p class="prose" style="font-size:13px">Endorsed by Shell, Mobil, Exxon and Sunoco. Private-labeled by Snap-On Tools, Schlumberger and Tokheim.</p>
+      </div>
+      <div class="corp-block">
+        <div class="corp-logo-area">
+          <div class="logo-names">SAS · McLane · Coca-Cola<br>Imperial · Core-Mark<br>Eby-Brown · Saint Joe</div>
+        </div>
+        <div class="corp-block-title" style="text-align:left">Major Food Wholesalers</div>
+        <p class="prose" style="font-size:13px">Seamless EDI integration with major wholesalers. Computer-assisted ordering (CAO) automates reorders with perpetual inventory and demand forecasting.</p>
+      </div>
+    </div>
+  </div>
+  <div class="page-footer">
+    <span>www.success-systems.com</span><span>1-800-653-3345</span><span>mkt@success-systems.com</span>
+  </div>
+</div>
+
+<!-- ────────────────────────────────────────
+     PAGE 3 — RETURN ON INVESTMENT
+──────────────────────────────────────────── -->
+<div class="page">
+  <div class="page-inner">
+    <h2 class="sec-head">Return On Investment</h2>
+
+    <p class="prose center">Based on a NACS (National Association of Convenience Stores) study, implementing a scanning system can improve your bottom line by 4% or more. The worksheet below can help aid you in determining the added profit you can enjoy from a scanning control system.</p>
+
+    <!-- SENDER: editable ROI inputs -->
+    
+
+    <table class="roi-table">
+      <thead>
+        <tr>
+          <th>Area of Saving</th>
+          <th>Example</th>
+          <th>Sample Calculation</th>
+          <th>Monthly Profit Increase</th>
+          <th style="color:#f59e0b">Your Business</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Elimination of Cashier Ring Error</td>
+          <td>Average ring errors accounting for <span id="r_ring_err_pct">8</span>% of all ring</td>
+          <td class="formula"><span id="r_sales_disp">$50,000.00</span> × <span id="r_ring_factor">0.8</span></td>
+          <td class="result" id="r_ring_err_val">$4,000.00</td>
+          <td><input class="roi-input" type="text" placeholder="$___"></td>
+        </tr>
+        <tr>
+          <td>Correct Margin calculation on all products</td>
+          <td>Increase store revenue by <span id="r_margin_pct">1</span>-3%</td>
+          <td class="formula"><span id="r_sales_disp2">$50,000.00</span> × <span id="r_margin_factor">0.1</span></td>
+          <td class="result" id="r_margin_val">$500.00</td>
+          <td><input class="roi-input" type="text" placeholder="$___"></td>
+        </tr>
+        <tr>
+          <td>Tighter control of Inventory</td>
+          <td>Gain 1 inventory turn per year by eliminating low selling items</td>
+          <td class="formula"><span id="r_inv_disp">$30,000.00</span> / 12</td>
+          <td class="result" id="r_inv_val">$2,500.00</td>
+          <td><input class="roi-input" type="text" placeholder="$___"></td>
+        </tr>
+        <tr>
+          <td>Lower labor training costs by eliminating cashier price training</td>
+          <td>Cashier training = 4 hours at <span id="r_wage_disp">$9.00</span> / hour for <span id="r_cashiers_disp">3</span> new employees / month</td>
+          <td class="formula"><span id="r_wage_calc">$9.00</span> × 4 × <span id="r_cashiers_calc">3</span></td>
+          <td class="result" id="r_labor_val">$108.00</td>
+          <td><input class="roi-input" type="text" placeholder="$___"></td>
+        </tr>
+        <tr class="divider">
+          <td>Monthly Profit Increase / Store</td>
+          <td colspan="2">Total from Above</td>
+          <td id="r_per_store">$7,108.00</td>
+          <td></td>
+        </tr>
+        <tr class="divider">
+          <td>Monthly Profit Increase: <span id="r_stores_label">4</span> Stores</td>
+          <td colspan="2"><span id="r_per_store2">$7,108.00</span> × <span id="r_stores_label2">4</span></td>
+          <td id="r_monthly_total">$28,432.00</td>
+          <td></td>
+        </tr>
+        <tr class="divider">
+          <td>Annual Profit Increase: <span id="r_stores_label3">4</span> Stores</td>
+          <td colspan="2"><span id="r_monthly_total2">$28,432.00</span> × 12</td>
+          <td class="total" id="r_annual_total">$341,184.00</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td class="investment-row">Investment</td>
+          <td colspan="3" class="investment-row" id="r_invest_disp">$21,160.00</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td class="investment-row">Return on Investment</td>
+          <td colspan="3" class="roi-row" id="r_roi_disp">16.1 times</td>
+          <td></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2 class="sec-head" style="margin-top:36px">Advantages of Cloud-Based Systems</h2>
+    <p class="prose center">When you consider the additional costs and risks of an in-house software solution, SaaS may be a better alternative for you.</p>
+
+    <table class="saas-table">
+      <thead>
+        <tr>
+          <th class="feature-col">Feature</th>
+          <th class="inhouse">In-House PC</th>
+          <th class="cloud">Cloud-Based Software</th>
+        </tr>
+      </thead>
+      <tbody id="saasBody">
+        <tr><td>No maintenance fee regarding hardware and backups</td><td class="check no"><span style="font-size:18px;line-height:1">✗</span></td><td class="check yes"><span style="font-size:18px;line-height:1">✓</span></td></tr>
+        <tr><td>Can easily install and update without help of IT staff or company</td><td class="check no"><span style="font-size:18px;line-height:1">✗</span></td><td class="check yes"><span style="font-size:18px;line-height:1">✓</span></td></tr>
+        <tr><td>Small initial capital expense for startup</td><td class="check no"><span style="font-size:18px;line-height:1">✗</span></td><td class="check yes"><span style="font-size:18px;line-height:1">✓</span></td></tr>
+        <tr><td>No long-term commitment to selected solution</td><td class="check no"><span style="font-size:18px;line-height:1">✗</span></td><td class="check yes"><span style="font-size:18px;line-height:1">✓</span></td></tr>
+        <tr><td>Updates to software handled automatically</td><td class="check no"><span style="font-size:18px;line-height:1">✗</span></td><td class="check yes"><span style="font-size:18px;line-height:1">✓</span></td></tr>
+        <tr><td>No additional service contracts for help desk support</td><td class="check no"><span style="font-size:18px;line-height:1">✗</span></td><td class="check yes"><span style="font-size:18px;line-height:1">✓</span></td></tr>
+        <tr><td>Access store sales information remotely</td><td class="check no"><span style="font-size:18px;line-height:1">✗</span></td><td class="check yes"><span style="font-size:18px;line-height:1">✓</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="page-footer">
+    <span>www.success-systems.com</span><span>1-800-653-3345</span><span>mkt@success-systems.com</span>
+  </div>
+</div>
+
+<!-- ────────────────────────────────────────
+     PAGE 4 — PRODUCT SUMMARY
+──────────────────────────────────────────── -->
+<div class="page">
+  <div class="page-inner">
+    <h2 class="sec-head">Success Systems Product Summary</h2>
+    <p class="prose center">Solutions designed to improve profitability with the least amount of time and effort — Cloud-Based, Diversified, and Turnkey.</p>
+
+    <div style="margin-top:28px">
+
+      <div class="product-block">
+        <div class="product-name">ePB <span style="font-size:14px;font-weight:400;color:var(--ink-3)">·</span> <span class="product-sub">Back Office Software</span></div>
+        <div class="product-desc" style="margin-top:8px"><strong>ePB Lite™</strong> — Entry-level price book and store automation. Integrates with tobacco, candy, Coke, Pepsi, beer/wine vendors. Price changes that used to take days now take minutes.</div>
+        <div class="product-desc" style="margin-top:6px"><strong>ePB Premium™</strong> — Full-functioned, enterprise-wide price book and store sales reporting for multi-site operators.</div>
+        <div class="product-desc" style="margin-top:6px"><strong>ePB Books™</strong> — Robust store automation with price book, fuel, and lottery management. Wet stock management, computer-aided ordering (CAO), daily reconciliation, inventory control, store merchandising, and comprehensive analytics. <strong>Can improve store revenue by 3–12%.</strong></div>
+        <div class="product-desc" style="margin-top:6px"><strong>ePB Accounting™</strong> — All ePB features plus integration with third-party G/L systems. Most popular with QuickBooks and Sage users.</div>
+      </div>
+
+      <div class="product-block">
+        <div class="product-name">ItScans <span class="product-sub">— Handheld Inventory Management App</span></div>
+        <ul class="product-features" style="margin-top:10px">
+          <li><strong>Receive Vendor Merchandise (DSD)</strong> — transmitted directly to ePB back-office for review, modification, or acceptance.</li>
+          <li><strong>Add new products</strong> — Identify shelf items and transmit to ePB.</li>
+          <li><strong>Manage all items at the shelf</strong> — Add or edit items, descriptions, departments, and prices.</li>
+          <li><strong>Store Inventory Auditing</strong> — Blind count management with shrink trend analysis over time.</li>
+          <li><strong>Price Validation</strong> — Check master price book against shelf prices for consistency.</li>
+          <li><strong>Quantity on Hand</strong> — Validate actual inventory and generate shrinkage reports.</li>
+          <li><strong>Create Purchase Orders</strong> — Reorder any shelf item through the handheld app.</li>
+          <li><strong>Lottery Scratch Ticket Inventory</strong> — Use phone camera to count lottery tickets; inventory updates immediately in ePB™.</li>
+        </ul>
+        <a class="product-link" href="https://success-systems.com/products/itscans/" target="_blank">success-systems.com/products/itscans/</a>
+      </div>
+
+      <div class="product-block">
+        <div class="product-name">ItsScans-AI <span class="product-sub">— Intelligent Invoice Conversion</span></div>
+        <p class="product-desc">Success Systems' AI solution converts computer-generated paper invoices in <strong>30 seconds per page</strong>. All traditional vendor invoices can be entered into any back-office system as EDI invoices.</p>
+        <ul class="product-features" style="margin-top:10px">
+          <li><strong>Artificially Intelligent</strong> — The most accurate, affordable, and reliable invoicing solution on the market.</li>
+          <li><strong>Back Office Support</strong> — Seamless with virtually any back-office solution. Combined with ePB: automatic price book and register updates.</li>
+          <li><strong>Notifications</strong> — Instantly notified of cost changes or new products when an invoice is scanned.</li>
+        </ul>
+        <a class="product-link" href="https://success-systems.com/products/itscans-ai/" target="_blank">success-systems.com/products/itscans-ai/</a>
+      </div>
+
+      <div class="product-block">
+        <div class="product-name">LotteryTrak <span class="product-sub">— Lottery Management</span></div>
+        <p class="product-desc">The most comprehensive cloud-based lottery tracking system for convenience store operators — from a single store to 100+ store chains.</p>
+        <ul class="product-features" style="margin-top:10px">
+          <li>Reduce hours per day needed to control the lottery category</li>
+          <li>Immediately identify missing scratch tickets, cutting losses with a user-friendly ticket checker</li>
+          <li>Easy-to-read dashboard with all vital information at a glance</li>
+          <li>Real-time email or text alerts for winning ticket pay-outs within seconds</li>
+        </ul>
+      </div>
+
+      <div class="product-block">
+        <div class="product-name">PriceCheck <span class="product-sub">— Wholesale Pricing</span></div>
+        <p class="product-desc">Don't let vendor price changes affect your bottom line. With today's supply chain volatility, wholesalers change prices constantly.</p>
+        <ul class="product-features" style="margin-top:10px">
+          <li>Instantly know of cost changes so you accurately adjust margins and don't miss revenue</li>
+          <li>See what vendors charge other stores in your area — powerful leverage for price negotiations</li>
+        </ul>
+      </div>
+
+      <div class="product-block">
+        <div class="product-name">ItsRealTime <span class="product-sub">— Real-Time Loss Prevention Tool</span></div>
+        <p class="product-desc">Adds real-time functionality to the ePB family by capturing, managing, and controlling POS sales data with instant alerts for voids or error corrects.</p>
+        <ul class="product-features" style="margin-top:10px">
+          <li>Compare multiple store sales, movement, margins and improve merchandising</li>
+          <li>Evaluate customer traffic, buying patterns, control markdowns and promotions</li>
+          <li>Manage cashiers, eliminate inefficiencies and identify potential internal theft</li>
+          <li>Receive instant alerts from anywhere for voids, error corrects, or an open drawer</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+  <div class="page-footer">
+    <span>www.success-systems.com</span><span>1-800-653-3345</span><span>mkt@success-systems.com</span>
+  </div>
+</div>
+
+<!-- ────────────────────────────────────────
+     PAGE 5 — CONFIGURATION & PRICING
+──────────────────────────────────────────── -->
+<div class="page">
+  <div class="page-inner">
+    <h2 class="sec-head">Configuration and Prices</h2>
+
+    <p class="prose">Thank you for taking the time with us to understand your business and its needs better. Success Systems is pleased to provide <strong id="d_name2">Moonis Khan</strong> with the following proposal:</p>
+
+    <!-- ═══ PRODUCT BUILDER (sender only) ═══ -->
+    
+
+    <!-- ═══ LIVE QUOTE TABLE (rendered dynamically) ═══ -->
+    <div id="quoteTableWrap">
+    <table class="quote-line-table">
+      <thead><tr><th style="width:32px"></th><th>Product / Service</th><th class="r">Unit Price</th><th class="r">Qty</th><th class="r">Amount</th></tr></thead>
+      <tbody>
+        <tr>
+      <td><button class="del-btn" onclick="removeItem(1)" title="Remove"></button></td>
+      <td class="product-cell"><strong> ePB® Books</strong><small>Subscription · Monthly</small></td>
+      <td class="r"><input type="number" value="4895" min="0" step="0.01" style="width:80px;font-family:monospace;font-size:13px;padding:4px 6px;border:1px solid var(--rule);border-radius:4px;text-align:right" onchange="updateItemField(1,'price',this.value)"> <span style="font-size:11px;color:var(--ink-3)">/ mo</span></td>
+      <td class="r"><input type="number" value="3" min="1" style="width:55px;font-family:monospace;font-size:13px;padding:4px 6px;border:1px solid var(--rule);border-radius:4px;text-align:center" onchange="updateItemField(1,'count',this.value)"></td>
+      <td class="r">$14,685.00</td>
+    </tr>
+        <tr class="subtotal-row">
+          <td></td><td>Subtotal</td><td class="r" colspan="2"></td><td class="r">$14,685.00</td>
+        </tr>
+        
+        <tr class="total-row">
+          <td></td><td>Grand Total</td><td class="r" colspan="2"></td><td class="r">$14,685.00</td>
+        </tr>
+      </tbody>
+    </table></div>
+
+    <!-- ═══ PAYMENT OPTIONS TABLE (rendered dynamically) ═══ -->
+    <div id="paymentOptionsWrap" style="margin-top:28px">
+    <div class="payment-matrix">
+      <div class="payment-matrix-head">Payment Options</div>
+      <table class="payment-table">
+        <thead><tr><th>Product / Service</th><th class="r">Perpetual License<br><span style="font-size:10px;font-weight:400;color:var(--teal-mid)">One-time upfront payment</span></th></tr></thead>
+        <tbody>
+          <tr><td class="opt-label">ePB® Books</td><td class="r">$14,685.00 (upfront)</td></tr>
+          <tr style="border-top:2px solid var(--teal)">
+            <td class="opt-total">Total</td><td class="r opt-total">$14,685.00 (upfront)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div></div>
+
+    <div class="credit-row" id="creditRowWrap" style="">
+      <span>Account Credit toward any new services on file</span>
+      <span id="d_credit">$3,570.00</span>
+    </div>
+  </div>
+  <div class="page-footer">
+    <span>www.success-systems.com</span><span>1-800-653-3345</span><span>mkt@success-systems.com</span>
+  </div>
+</div>
+
+<!-- ────────────────────────────────────────
+     PAGE 6 — PAYMENT TERMS
+──────────────────────────────────────────── -->
+<div class="page">
+  <div class="page-inner">
+    <h2 class="sec-head">Payment Terms</h2>
+
+    <ul class="terms-list">
+      <li>All quotations are subject to change without notice.</li>
+      <li>All Success Systems products and services are offered under Success Systems Web Services Agreements.</li>
+      <li>Prices do not include actual travel, lodging, meals or sundry expenses. These expenses are billed as incurred.</li>
+      <li>All past due balances accrue interest at 18% per annum calculated daily.</li>
+      <li>3rd party financing for 1 to 60 months is available upon request.</li>
+      <li>Credit card swipe, integrated credit card/debit card processing, debit pin pad option — please request a custom quotation.</li>
+      <li>Fintech subscription required for all EDI capture of beer, wine and liquor invoices.</li>
+    </ul>
+
+    <h3 class="sub-head" style="margin-top:28px">Milestone Payment Schedule</h3>
+    <ul class="terms-list">
+      <li><strong style="min-width:36px;display:inline-block">60%</strong>&nbsp; Due at time of order.</li>
+      <li><strong style="min-width:36px;display:inline-block">Bal.</strong>&nbsp; Due at time User has access to price book to make changes, or ninety days from initial order — whichever is earliest.</li>
+      <li><strong style="min-width:36px;display:inline-block">Bal.</strong>&nbsp; Due at time of on-site training is scheduled.</li>
+      <li><strong style="min-width:36px;display:inline-block">Bal.</strong>&nbsp; Single store: due upon customer receiving log-in credentials and ability to use the application.</li>
+    </ul>
+
+    <div class="agreement-block">
+      <div class="agreement-title">Smokin Rebates® &amp; Customer Agreement</div>
+      <p class="prose" style="font-size:13.5px;margin-bottom:14px">Smokin Rebates® Altria Tier 1, RJR, ITG and Juul sales reporting pricing are an optional service, offered under separate agreements but may be proposed in this document.</p>
+      <p class="prose" style="font-size:13.5px;margin-bottom:10px">Customer agrees to assist Success Systems products and services and will provide reasonable assistance for the following:</p>
+      <ul class="agreement-list">
+        <li>Advise and consult on new products and services.</li>
+        <li>Act as a referral site.</li>
+        <li>Accept a position on a proposed customer advisor panel.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="page-footer">
+    <span>www.success-systems.com</span><span>1-800-653-3345</span><span>mkt@success-systems.com</span>
+  </div>
+</div>
+
+</div><!-- /doc-wrap -->
+</div><!-- /doc-main -->
+
+<!-- ═══ STICKY ROI CALCULATOR ═══ -->
+<aside class="calc-aside">
+  <div class="calc-title">ROI Calculator</div>
+  <p class="calc-note">Adjust any input to model your savings scenario. Quote content remains locked in recipient mode.</p>
+
+  <label class="calc-label">Annual In-Store Sales</label>
+  <input class="calc-input" id="c_sales" type="number" value="600000" oninput="calcROI()">
+
+  <label class="calc-label">Average Hourly Wage</label>
+  <input class="calc-input" id="c_wage" type="number" value="15" step=".25" oninput="calcROI()">
+
+  <label class="calc-label">Invoices / Day</label>
+  <input class="calc-input" id="c_inv_day" type="number" value="3" oninput="calcROI()">
+
+  <label class="calc-label">Minutes / Invoice</label>
+  <input class="calc-input" id="c_inv_min" type="number" value="20" oninput="calcROI()">
+
+  <label class="calc-label">Lottery Count Hours / Day</label>
+  <input class="calc-input" id="c_lotto" type="number" value="1.5" step=".25" oninput="calcROI()">
+
+  <label class="calc-label">Inventory Accuracy %</label>
+  <input class="calc-input" id="c_acc" type="number" value="90" max="100" oninput="calcROI()">
+
+  <label class="calc-label">Annual Tobacco Sales</label>
+  <input class="calc-input" id="c_tobacco" type="number" value="150000" oninput="calcROI()">
+
+  <label class="calc-label">Investment Amount</label>
+  <input class="calc-input" id="c_invest" type="number" value="21160" oninput="calcROI()">
+
+  <div class="calc-result">
+    <div class="calc-result-label">Estimated Annual Profit Increase</div>
+    <div class="calc-big" id="c_annual">$21,750.00</div>
+    <div class="calc-sub" id="c_monthly">Monthly: $1,812.50</div>
+  </div>
+
+  <div class="calc-result">
+    <div class="calc-result-label">Estimated Return</div>
+    <div class="calc-big neutral" id="c_roi">1.5× ROI</div>
+    <div class="calc-sub" id="c_payback">Payback: 8.1 months</div>
+  </div>
+
+  <div class="calc-result">
+    <div class="calc-result-label">Savings Breakdown</div>
+    <div class="calc-breakdown" id="c_breakdown">
+    <div class="calc-row"><span>Invoice labor</span><span>$3,750.00</span></div>
+    <div class="calc-row"><span>Lottery labor</span><span>$8,212.50</span></div>
+    <div class="calc-row"><span>Inventory margin</span><span>$9,000.00</span></div>
+    <div class="calc-row"><span>Tobacco rebate</span><span>$787.50</span></div>
+    <div class="calc-divider"></div>
+    <div class="calc-row"><span>Annual total</span><span>$21,750.00</span></div>
+    <div class="calc-row"><span>Investment</span><span>$14,685.00</span></div></div>
+  </div>
+
+  <div class="calc-result">
+    <div class="calc-result-label">Focus Areas</div>
+    <ul class="calc-recs" id="c_recs"><li>Invoice automation is a strong driver — ItScans-AI recommended.</li><li>Lottery labor is significant — LotteryTrak efficiency case.</li><li>Inventory accuracy is a major margin lever — ePB Books + ItScans.</li></ul>
+  </div>
+
+  <div class="calc-actions">
+    <button class="calc-btn calc-btn-primary" id="acceptBtn" onclick="acceptQuote()">Accept Quote</button>
+    <button class="calc-btn calc-btn-ghost" onclick="window.print()">Print</button>
+  </div>
+  <div style="font-size:11px;color:rgba(255,255,255,.25);margin-top:10px;line-height:1.5" id="c_footer">Pricing valid through May 27, 2026.</div>
+</aside>
+</div><!-- /doc-outer -->
+
+<script>
+
+
+
+
+
+
+
+/* ═══════════════════════════════════════
+   PRODUCT CATALOG DEFINITION
+═══════════════════════════════════════ */
+const CATALOG = [
+  { id:'epb',       name:'ePB® Suite',            icon:'', desc:'Comprehensive back-office software — price book, inventory, margin pricing, promotions, invoices, reports, shelf labels.',
+    variants:['ePB® Lite','ePB® Premium','ePB® Books','ePB® Accounting'], defaultVariant:'ePB® Books' },
+  { id:'smokin',    name:"Smokin' Rebates®",       icon:'', desc:'Automates weekly scan data submission for Altria, RJRT, and ITG tobacco rebate programs.', customFields:'smokin' },
+  { id:'pricecheck',name:'PriceCheck®',            icon:'', desc:'Wholesale pricing insights to negotiate better deals and control costs.' },
+  { id:'itsrealtime',name:'ItsRealTime®',          icon:'', desc:'Real-time alerts via text/email for voids, no-sales, open drawers, and error corrects plus sales analytics.' },
+  { id:'lotterytrak',name:'LotteryTrak®',          icon:'', desc:'Cloud-based lottery management — inventory control, sales tracking, and optimization.' },
+  { id:'itscans',   name:'ItScans®',               icon:'', desc:'Mobile app for smartphones/tablets — audit inventory, add products, and on-the-go tasks.' },
+  { id:'itscans_ai',name:'ItScans-AI®',            icon:'', desc:'AI-powered tool converts paper invoices to EDI format in under 30 seconds per page.' },
+  { id:'platformpos',name:'PlatformPOS®',          icon:'', desc:'15-inch POS register — Silver $99.99/mo, Gold $129.99/mo, Platinum $189.99/mo, Titanium $224.99/mo, Diamond $289.99/mo. One-time setup $499. Options: TruAge +$9.95/mo, 2nd POS +$89.95/mo.', customFields:'platformpos' },
+  { id:'itsreward', name:'ItsReward™',             icon:'', desc:'Mobile app for customer loyalty, coupons, and Altria DTP features.' },
+  { id:'cstores',   name:'CStores2Go™',            icon:'', desc:'Additional back-office tools for on-the-go store management.' },
+  { id:'storemgr',  name:'StoreManager®',          icon:'', desc:'Comprehensive store operations management solution.' },
+  { id:'support',   name:'Yearly Support',         icon:'', desc:'Annual support plan — unlimited help desk, training seminars, and technical assistance.' },
+  { id:'enterprise',name:'Enterprise Pricebook',   icon:'', desc:'Enterprise-grade pricebook module for large multi-site operators.' },
+  { id:'hardware',  name:'Hardware',               icon:'', desc:'Specify hardware component — POS terminal, scanner, tablet, receipt printer, cash drawer, or other equipment.', customFields:'hardware' },
+];
+
+// paymentSlots: dynamically sized array — no hard cap
+let paymentSlots = [
+  { type:'monthly',   annualDiscount:0,  financeMonths:36 },
+  { type:'annual',    annualDiscount:15, financeMonths:36 },
+  { type:'perpetual', annualDiscount:0,  financeMonths:36 },
+];
+
+function addPaymentSlot() {
+  paymentSlots.push({ type:'monthly', annualDiscount:0, financeMonths:36 });
+  renderPaymentSlotEditor();
+  renderQuoteTable();
+}
+
+function removePaymentSlot(i) {
+  paymentSlots.splice(i, 1);
+  renderPaymentSlotEditor();
+  renderQuoteTable();
+}
+
+/* ═══════════════════════════════════════
+   STATE
+═══════════════════════════════════════ */
+let MODE = 'recipient'; // LOCKED
+let quoteItems = [];        // array of configured line items
+let selectedCatalogIds = [];// ids checked in catalog picker
+let nextItemId = 1;
+
+/* ═══════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════ */
+const $ = id => document.getElementById(id);
+const v = id => { const el = $(id); return el ? el.value : ''; };
+const fmt = n => '$' + Number(n||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmtN = (n, dp=2) => Number(n||0).toLocaleString(undefined,{minimumFractionDigits:dp,maximumFractionDigits:dp});
+function setText(id, val) { const el=$(id); if(el) el.textContent=val; }
+
+/* ═══════════════════════════════════════
+   MODE TOGGLE
+═══════════════════════════════════════ */
+function toggleMode() {
+  MODE = MODE === 'recipient' ? 'sender' : 'recipient';
+  applyMode();
+  renderPaymentSlotEditor();
+  syncDoc();
+  renderQuoteTable();
+  recalcROI();
+  calcROI();
+  updateExpiry();
+}
+
+function applyMode() {
+  const s = MODE === 'sender';
+  $('modePill').textContent = s ? 'Sender Edit Mode' : 'Recipient View';
+  $('modePill').className   = 'mode-pill ' + (s ? 'sender' : 'recipient');
+  $('modeToggleBtn').textContent = s ? 'Switch to Recipient View' : 'Switch to Sender Mode';
+  $('modeToggleBtn').className   = 'tbtn ' + (s ? 'tbtn-ghost' : 'tbtn-warn');
+  $('exportBtn').style.display   = s ? '' : 'none';
+  var rb = document.getElementById('resetBtn'); if(rb) rb.style.display = s ? '' : 'none';
+  document.querySelectorAll('.sender-only').forEach(el => el.style.display = s ? '' : 'none');
+  // Show the addItemForm wrapper in sender mode so payment options are always accessible
+  const aif = $('addItemForm');
+  if (aif) aif.style.display = s ? '' : 'none';
+  // Only show addItemFields when products are actually selected for configuration
+  const aifFields = $('addItemFields');
+  if (aifFields) aifFields.style.display = selectedCatalogIds.length > 0 ? '' : 'none';
+}
+
+/* ═══════════════════════════════════════
+   SYNC COVER TEXT
+═══════════════════════════════════════ */
+function syncDoc() {
+  const name   = v('s_name')  || 'Moonis Khan';
+  const rep    = v('s_rep')   || 'Edward Carley';
+  const quote  = v('s_quote') || 'SS-MOONIS-2026-001';
+  const stores = Number(v('s_stores')) || 3;
+  const date   = v('s_date');
+  setText('d_name',  name);
+  setText('d_name2', name);
+  setText('d_quote', quote);
+  const dateFmt = date ? new Date(date+'T12:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}) : '—';
+  const bylineEl = $('d_byline');
+  if(bylineEl) bylineEl.innerHTML = `Presented on ${dateFmt} By: <strong>${rep}</strong>`;
+  document.querySelectorAll('.d-stores').forEach(el => el.textContent = stores);
+}
+
+/* ═══════════════════════════════════════
+   EXPIRY STATUS
+═══════════════════════════════════════ */
+function updateExpiry() {
+  const expVal = v('s_expiry');
+  const badge  = $('quoteStatusBadge');
+  const noteEl = $('quoteStatusNote');
+  const footer = $('c_footer');
+  const btn    = $('acceptBtn');
+  if(!badge) return;
+  if(!expVal) { badge.textContent='No Expiry Set'; badge.className='badge edit'; return; }
+  const today = new Date(); today.setHours(0,0,0,0);
+  const expiry = new Date(expVal+'T00:00:00');
+  const expired = today > expiry;
+  if(expired) {
+    badge.textContent='Expired'; badge.className='badge expired';
+    if(noteEl) noteEl.innerHTML=`Quote <strong>${v('s_quote')||'—'}</strong> · Expired`;
+    if(footer) footer.textContent='This quote has expired. Please request a refreshed proposal.';
+    if(MODE==='recipient' && btn) btn.disabled=true;
+  } else {
+    badge.textContent='Valid'; badge.className='badge valid';
+    const ef = expiry.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+    const stores = Number(v('s_stores'))||3;
+    if(noteEl) noteEl.innerHTML=`Quote <strong>${v('s_quote')||'—'}</strong> · ${stores} stores · Valid through ${ef}`;
+    if(footer) footer.textContent=`Pricing valid through ${ef}.`;
+    if(btn) btn.disabled=false;
+  }
+}
+
+/* ═══════════════════════════════════════
+   CATALOG GRID RENDER
+═══════════════════════════════════════ */
+function renderCatalogGrid() {
+  const grid = $('catalogGrid');
+  if(!grid) return;
+  grid.innerHTML = CATALOG.map(p => `
+    <label class="catalog-chip ${selectedCatalogIds.includes(p.id)?'selected':''}" onclick="toggleCatalogItem('${p.id}',event)">
+      <input type="checkbox" ${selectedCatalogIds.includes(p.id)?'checked':''} id="chk_${p.id}">
+      <span class="chip-icon">${p.icon}</span>
+      <span><span class="chip-name">${p.name}</span>${p.variants?`<span class="chip-variant">${p.variants.length} variants</span>`:''}</span>
+    </label>
+  `).join('');
+
+  // Show/hide the product fields section (payment options always visible in sender mode)
+  const aifFields = $('addItemFields');
+  if(aifFields) aifFields.style.display = selectedCatalogIds.length > 0 ? '' : 'none';
+  renderAddItemFields();
+}
+
+function toggleCatalogItem(id, e) {
+  e.preventDefault();
+  const idx = selectedCatalogIds.indexOf(id);
+  if(idx === -1) selectedCatalogIds.push(id);
+  else selectedCatalogIds.splice(idx, 1);
+  renderCatalogGrid();
+}
+
+/* ═══════════════════════════════════════
+   ADD-ITEM CONFIGURE FORM
+═══════════════════════════════════════ */
+
+/* PlatformPOS tier data */
+const PPOS_TIERS = [
+  { id:'silver',   label:'Silver',   monthly:99.99,  includes:['Initial Set Up','Free Ongoing Training','Integrated Card Processing','Keep Your Current Card Processing','Store Manager™'] },
+  { id:'gold',     label:'Gold',     monthly:129.99, includes:['Initial Set Up','Free Ongoing Training','Integrated Card Processing','Keep Your Current Card Processing','Store Manager™',"Smokin' Rebates® Multipack","Smokin' Rebates® Tier 2"] },
+  { id:'platinum', label:'Platinum', monthly:189.99, includes:['Initial Set Up','Free Ongoing Training','Integrated Card Processing','Keep Your Current Card Processing','Store Manager™',"Smokin' Rebates® Multipack","Smokin' Rebates® Tier 2",'ItsRealTime®','PriceCheck®','LotteryTrak®'] },
+  { id:'titanium', label:'Titanium', monthly:224.99, includes:['Initial Set Up','Free Ongoing Training','Integrated Card Processing','Keep Your Current Card Processing','Store Manager™',"Smokin' Rebates® Multipack","Smokin' Rebates® Tier 2",'ItsRealTime®','PriceCheck®','LotteryTrak®',"Smokin' Rebates® Tier 3"] },
+  { id:'diamond',  label:'Diamond',  monthly:289.99, includes:['Initial Set Up','Free Ongoing Training','Integrated Card Processing','Keep Your Current Card Processing','Store Manager™',"Smokin' Rebates® Multipack","Smokin' Rebates® Tier 2",'ItsRealTime®','PriceCheck®','LotteryTrak®',"Smokin' Rebates® Tier 3",'ItScans-AI®'] },
+];
+
+function pposTierBlock(id) {
+  return `
+    <div class="sf" style="grid-column:1/-1">
+      <label>PlatformPOS® Tier — select one</label>
+      <div class="ppos-tier-grid" id="af_tiergrid_${id}">
+        ${PPOS_TIERS.map(t => `
+          <label class="ppos-tier-chip" id="af_tierchip_${id}_${t.id}">
+            <input type="radio" name="af_tier_${id}" value="${t.id}" id="af_tier_${id}_${t.id}"
+              onchange="onPPOSTierChange('${id}','${t.id}')">
+            <span class="tier-name">${t.label}</span>
+            <span class="tier-price">$${t.monthly}/mo</span>
+          </label>`).join('')}
+      </div>
+    </div>
+    <div class="sf" style="grid-column:1/-1" id="af_tierdetail_${id}" style="display:none">
+      <label>Included in selected tier</label>
+      <div id="af_tierincludes_${id}" class="tier-includes-list"></div>
+    </div>
+    <div class="sf">
+      <label>Add TruAge Verification? (+$9.95/mo)</label>
+      <select id="af_truage_${id}" onchange="updatePPOSPrice('${id}')">
+        <option value="no">No</option>
+        <option value="yes">Yes — +$9.95/mo</option>
+      </select>
+    </div>
+    <div class="sf">
+      <label>Add 2nd Networked PlatformPOS? (+$89.95/mo)</label>
+      <select id="af_2ndpos_${id}" onchange="updatePPOSPrice('${id}')">
+        <option value="no">No</option>
+        <option value="yes">Yes — +$89.95/mo</option>
+      </select>
+    </div>`;
+}
+
+function onPPOSTierChange(id, tierId) {
+  const tier = PPOS_TIERS.find(t=>t.id===tierId);
+  if(!tier) return;
+  // Show includes
+  const inc = document.getElementById(`af_tierincludes_${id}`);
+  const det = document.getElementById(`af_tierdetail_${id}`);
+  if(inc) inc.innerHTML = tier.includes.map(i=>`<span class="tier-tag">${i}</span>`).join('');
+  if(det) det.style.display = '';
+  // Highlight selected chip
+  PPOS_TIERS.forEach(t => {
+    const chip = document.getElementById(`af_tierchip_${id}_${t.id}`);
+    if(chip) chip.classList.toggle('selected', t.id===tierId);
+  });
+  updatePPOSPrice(id);
+}
+
+function updatePPOSPrice(id) {
+  const sel = document.querySelector(`input[name="af_tier_${id}"]:checked`);
+  if(!sel) return;
+  const tier = PPOS_TIERS.find(t=>t.id===sel.value);
+  if(!tier) return;
+  let price = tier.monthly;
+  var _ta=document.getElementById('af_truage_'+id); if(_ta && _ta.value==='yes') price += 9.95;
+  var _nd=document.getElementById('af_2ndpos_'+id); if(_nd && _nd.value==='yes') price += 89.95;
+  const priceEl = document.getElementById(`af_price_${id}`);
+  if(priceEl) priceEl.value = price.toFixed(2);
+}
+
+function renderAddItemFields() {
+  const wrap = $('addItemFields');
+  if(!wrap) return;
+  wrap.innerHTML = selectedCatalogIds.map(id => {
+    const p = CATALOG.find(c=>c.id===id);
+    if(!p) return '';
+
+    const variantSel = p.variants ? `
+      <div class="sf">
+        <label>Variant</label>
+        <select id="af_variant_${id}">
+          ${p.variants.map(vv=>`<option value="${vv}"${vv===p.defaultVariant?' selected':''}>${vv}</option>`).join('')}
+        </select>
+      </div>` : '';
+
+    // Smokin' Rebates custom fields
+    const smokinFields = p.customFields==='smokin' ? `
+      <div class="sf" style="grid-column:1/-1">
+        <label>Program / Tier specification</label>
+        <input type="text" id="af_smokin_tier_${id}" placeholder="e.g. Altria Tier 1, RJRT Multipack, ITG Tier 2…" style="width:100%">
+      </div>` : '';
+
+    // PlatformPOS custom fields
+    const pposFields = p.customFields==='platformpos' ? pposTierBlock(id) : '';
+
+    // Hardware custom fields
+    const hardwareFields = p.customFields==='hardware' ? `
+      <div class="sf" style="grid-column:1/-1">
+        <label>Component Description</label>
+        <input type="text" id="af_hw_component_${id}" placeholder="e.g. 15&quot; POS Terminal, Bluetooth Scanner, Receipt Printer, Cash Drawer…" style="width:100%">
+      </div>
+      <div class="sf">
+        <label>Make / Model (optional)</label>
+        <input type="text" id="af_hw_model_${id}" placeholder="e.g. PAX A920, Zebra DS2208…">
+      </div>` : '';
+
+    // For platformpos, hide billing cycle / license (controlled by tier)
+    const isPPos = p.customFields==='platformpos';
+    const stdFields = isPPos ? `
+      <div class="sf">
+        <label>Count / Stores</label>
+        <input type="number" id="af_count_${id}" value="${v('s_stores')||3}" min="1">
+      </div>
+      <div class="sf">
+        <label>One-Time Setup Fee ($)</label>
+        <input type="number" id="af_setup_${id}" value="499.00" min="0" step="0.01">
+      </div>
+      <div class="sf">
+        <label>Monthly Price (auto-set by tier)</label>
+        <input type="number" id="af_price_${id}" value="" placeholder="Select tier above" min="0" step="0.01" readonly style="background:#f3f5f7;color:var(--ink-3)">
+      </div>
+      <div class="sf">
+        <label>Notes (optional)</label>
+        <input type="text" id="af_notes_${id}" placeholder="e.g. Altria DTP eligible">
+      </div>` : `
+      <div class="sf">
+        <label>License Type</label>
+        <select id="af_license_${id}">
+          <option value="subscription">Subscription</option>
+          <option value="perpetual">Perpetual</option>
+          <option value="onetime">One-Time Fee</option>
+          <option value="included">Included</option>
+        </select>
+      </div>
+      <div class="sf">
+        <label>Billing Cycle</label>
+        <select id="af_cycle_${id}">
+          <option value="monthly">Monthly</option>
+          <option value="annual">Annual</option>
+          <option value="onetime">One-Time</option>
+        </select>
+      </div>
+      <div class="sf">
+        <label>List Price ($)</label>
+        <input type="number" id="af_price_${id}" value="" placeholder="0.00" min="0" step="0.01">
+      </div>
+      <div class="sf">
+        <label>Count / Stores</label>
+        <input type="number" id="af_count_${id}" value="${v('s_stores')||3}" min="1">
+      </div>
+      <div class="sf">
+        <label>Notes (optional)</label>
+        <input type="text" id="af_notes_${id}" placeholder="e.g. Included 1st year">
+      </div>`;
+
+    return `
+      <div class="add-item-row">
+        <div class="add-item-row-header">
+          <span class="add-item-row-name">${p.name}</span>
+        </div>
+        <div class="add-item-fields">
+          ${variantSel}${smokinFields}${pposFields}${stdFields}${hardwareFields}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function commitProducts() {
+  let added = 0;
+  selectedCatalogIds.forEach(id => {
+    const p = CATALOG.find(c=>c.id===id);
+    if(!p) return;
+    const variant  = v(`af_variant_${id}`)  || p.name;
+    const license  = p.customFields==='platformpos' ? 'subscription' : (v(`af_license_${id}`) || 'subscription');
+    const cycle    = p.customFields==='platformpos' ? 'monthly' : (v(`af_cycle_${id}`) || 'monthly');
+    const price    = parseFloat(v(`af_price_${id}`) || 0);
+    const count    = parseInt(v(`af_count_${id}`) || 1);
+    const notes    = v(`af_notes_${id}`) || '';
+
+    // Product-specific extra data
+    let extra = {};
+
+    if(p.customFields === 'smokin') {
+      extra.smokinTier = v(`af_smokin_tier_${id}`) || '';
+    }
+
+    if(p.customFields === 'platformpos') {
+      const selTier = document.querySelector(`input[name="af_tier_${id}"]:checked`);
+      const tierObj = selTier ? PPOS_TIERS.find(t=>t.id===selTier.value) : null;
+      extra.pposTier     = tierObj ? tierObj.label : '';
+      extra.ppOsIncludes = tierObj ? tierObj.includes : [];
+      extra.pposSetup    = parseFloat(v(`af_setup_${id}`) || 499);
+      extra.pposTruage   = v(`af_truage_${id}`) === 'yes';
+      extra.ppos2ndPos   = v(`af_2ndpos_${id}`) === 'yes';
+    }
+
+    if(p.customFields === 'hardware') {
+      extra.hwComponent = v(`af_hw_component_${id}`) || '';
+      extra.hwModel     = v(`af_hw_model_${id}`) || '';
+    }
+
+    // Build display name
+    let displayName = p.variants ? variant : p.name;
+    if(p.customFields === 'smokin' && extra.smokinTier) displayName += ` — ${extra.smokinTier}`;
+    if(p.customFields === 'platformpos' && extra.pposTier) displayName += ` (${extra.pposTier})`;
+    if(p.customFields === 'hardware' && extra.hwComponent) displayName = `Hardware: ${extra.hwComponent}`;
+
+    quoteItems.push({ _id: nextItemId++, catalogId: id, icon: p.icon,
+      name: displayName, baseName: p.name,
+      license, cycle, price, count, notes, extra });
+    added++;
+
+    // For platformpos, also add setup fee as a separate one-time line
+    if(p.customFields === 'platformpos' && extra.pposSetup > 0) {
+      quoteItems.push({ _id: nextItemId++, catalogId: 'platformpos_setup', icon: '',
+        name: `PlatformPOS® Setup Fee (${extra.pposTier})`, baseName: 'PlatformPOS® Setup Fee',
+        license:'onetime', cycle:'onetime', price: extra.pposSetup, count, notes:'One-time per location', extra:{} });
+    }
+  });
+  selectedCatalogIds = [];
+  renderCatalogGrid();
+  renderBuilderItemList();
+  renderQuoteTable();
+  // Keep addItemForm visible so sender can add more products anytime
+}
+
+function cancelAddProducts() {
+  selectedCatalogIds = [];
+  renderCatalogGrid();
+  // addItemForm stays visible — sender can always add more products
+  var aifFields = $('addItemFields');
+  if (aifFields) aifFields.style.display = 'none';
+}
+
+function resetQuote() {
+  if (!confirm('Reset the entire quote? This will remove all items and restore default payment options.')) return;
+  quoteItems = [];
+  nextItemId = 1;
+  selectedCatalogIds = [];
+  paymentSlots = [
+    { type:'monthly',   annualDiscount:0,  financeMonths:36 },
+    { type:'annual',    annualDiscount:15, financeMonths:36 },
+    { type:'perpetual', annualDiscount:0,  financeMonths:36 },
+  ];
+  const cr = document.getElementById('s_credit');   if(cr) cr.value = '0';
+  const ds = document.getElementById('s_discount'); if(ds) ds.value = '0';
+  renderCatalogGrid();
+  renderPaymentSlotEditor();
+  renderBuilderItemList();
+  renderQuoteTable();
+}
+
+/* ── BUILDER ITEM LIST (live editable rows in sender panel) ── */
+function renderBuilderItemList() {
+  const wrap = document.getElementById('builderItemList');
+  const countEl = document.getElementById('quoteItemCount');
+  if (!wrap) return;
+  if (countEl) countEl.textContent = quoteItems.length ? `${quoteItems.length} item${quoteItems.length!==1?'s':''}` : '';
+
+  if (quoteItems.length === 0) {
+    wrap.innerHTML = '<div class="builder-empty" id="builderEmptyMsg">No items added yet — select products below.</div>';
+    return;
+  }
+
+  wrap.innerHTML = quoteItems.map(item => {
+    const cycleLabel = { monthly:'/ mo', annual:'/ yr', onetime:'one-time', finance:'financed' }[item.cycle] || '';
+    return `<div class="builder-item-row">
+      <span class="builder-item-name" title="${item.name}">${item.name}</span>
+      <span class="builder-item-label">Price&nbsp;$</span>
+      <input class="builder-item-input" type="number" value="${item.price.toFixed(2)}" min="0" step="0.01"
+        onchange="updateItemField(${item._id},'price',this.value)" title="Unit price">
+      <span class="builder-item-label">Qty</span>
+      <input class="builder-item-input" type="number" value="${item.count}" min="1" step="1" style="width:56px"
+        onchange="updateItemField(${item._id},'count',this.value)" title="Quantity / stores">
+      <button class="builder-item-del" onclick="removeItem(${item._id})" title="Remove">&times;</button>
+    </div>`;
+  }).join('');
+}
+
+function removeItem(itemId) {
+  quoteItems = quoteItems.filter(i => i._id !== itemId);
+  renderBuilderItemList();
+  renderQuoteTable();
+}
+
+/* ═══════════════════════════════════════
+   INLINE EDIT HELPERS (item edits in table)
+═══════════════════════════════════════ */
+function updateItemField(itemId, field, value) {
+  const item = quoteItems.find(i=>i._id===itemId);
+  if(!item) return;
+  if(field==='price'||field==='count') item[field] = parseFloat(value)||0;
+  else item[field] = value;
+  renderBuilderItemList();
+  renderQuoteTable();
+}
+
+/* ═══════════════════════════════════════
+   QUOTE TABLE RENDER (document page)
+═══════════════════════════════════════ */
+function renderQuoteTable() {
+  const wrap = $('quoteTableWrap');
+  if(!wrap) return;
+
+  const discountPct = parseFloat(v('s_discount')||0);
+  const credit      = parseFloat(v('s_credit')||0);
+  const isSender    = MODE === 'sender';
+
+  if(quoteItems.length === 0) {
+    wrap.innerHTML = `<div class="empty-quote"><div class="eq-icon"></div>No products added yet. Use the Product Builder above to add items to this quote.</div>`;
+    $('paymentOptionsWrap').innerHTML = '';
+    $('creditRowWrap').style.display = 'none';
+    return;
+  }
+
+  // Subtotal
+  const lineTotal = quoteItems.reduce((s,i) => s + (i.price * i.count), 0);
+  const discountAmt = lineTotal * (discountPct/100);
+  const grandTotal  = lineTotal - discountAmt;
+
+  // Line item rows
+  const cycleLabel = c => ({monthly:'/ mo', annual:'/ yr', onetime:'one-time'}[c]||'');
+  const licenseLabel = l => ({subscription:'Subscription', perpetual:'Perpetual License', onetime:'One-Time', included:'Included'}[l]||l);
+
+  const rows = quoteItems.map(item => {
+    const lineAmt = item.price * item.count;
+    const delBtn  = isSender ? `<button class="del-btn" onclick="removeItem(${item._id})" title="Remove"></button>` : '';
+    const priceCell = isSender
+      ? `<input type="number" value="${item.price}" min="0" step="0.01" style="width:80px;font-family:monospace;font-size:13px;padding:4px 6px;border:1px solid var(--rule);border-radius:4px;text-align:right" onchange="updateItemField(${item._id},'price',this.value)">`
+      : fmt(item.price);
+    const countCell = isSender
+      ? `<input type="number" value="${item.count}" min="1" style="width:55px;font-family:monospace;font-size:13px;padding:4px 6px;border:1px solid var(--rule);border-radius:4px;text-align:center" onchange="updateItemField(${item._id},'count',this.value)">`
+      : item.count;
+    return `<tr>
+      <td>${delBtn}</td>
+      <td class="product-cell"><strong>${item.icon} ${item.name}</strong><small>${licenseLabel(item.license)} · ${item.cycle==='onetime'?'One-Time':item.cycle==='annual'?'Annual':'Monthly'}${item.notes?' · '+item.notes:''}</small></td>
+      <td class="r">${priceCell} <span style="font-size:11px;color:var(--ink-3)">${cycleLabel(item.cycle)}</span></td>
+      <td class="r">${countCell}</td>
+      <td class="r">${fmt(lineAmt)}</td>
+    </tr>`;
+  }).join('');
+
+  const discountRow = discountPct > 0 ? `
+    <tr class="discount-row">
+      <td></td><td><strong>Discount (${fmtN(discountPct,1)}%)</strong></td>
+      <td class="r" colspan="2"></td><td class="r">− ${fmt(discountAmt)}</td>
+    </tr>` : '';
+
+  const delHeader = isSender ? '<th style="width:32px"></th>' : '<th style="width:0;padding:0"></th>';
+
+  wrap.innerHTML = `
+    <table class="quote-line-table">
+      <thead><tr>${delHeader}<th>Product / Service</th><th class="r">Unit Price</th><th class="r">Qty</th><th class="r">Amount</th></tr></thead>
+      <tbody>
+        ${rows}
+        <tr class="subtotal-row">
+          <td></td><td>Subtotal</td><td class="r" colspan="2"></td><td class="r">${fmt(lineTotal)}</td>
+        </tr>
+        ${discountRow}
+        <tr class="total-row">
+          <td></td><td>Grand Total</td><td class="r" colspan="2"></td><td class="r">${fmt(grandTotal)}</td>
+        </tr>
+      </tbody>
+    </table>`;
+
+  // Update sidebar calculator investment
+  const ci = $('c_invest');
+  if(ci) { ci.value = grandTotal.toFixed(2); calcROI(); }
+
+  // Render payment options
+  renderPaymentOptions(grandTotal);
+
+  // Credit row
+  const crWrap = $('creditRowWrap');
+  if(crWrap) {
+    crWrap.style.display = credit > 0 ? '' : 'none';
+    setText('d_credit', fmt(credit));
+  }
+}
+
+/* ═══════════════════════════════════════
+   PAYMENT OPTIONS TABLE
+═══════════════════════════════════════ */
+/* ── PAYMENT SLOT EDITOR (sender panel) ─────────────────────── */
+function renderPaymentSlotEditor() {
+  const wrap = document.getElementById('paymentSlotsEditor');
+  if (!wrap) return;
+  const types = [
+    { value:'off',       label:'Off (hidden)' },
+    { value:'monthly',   label:'Monthly' },
+    { value:'annual',    label:'Annual' },
+    { value:'perpetual', label:'Perpetual License' },
+    { value:'onetime',   label:'One-Time Fee' },
+    { value:'finance',   label:'Finance' },
+  ];
+  wrap.innerHTML = paymentSlots.map((slot, i) => {
+    const isOff = slot.type === 'off';
+    const typeOpts = types.map(t =>
+      `<option value="${t.value}"${slot.type===t.value?' selected':''}>${t.label}</option>`
+    ).join('');
+
+    const extra = slot.type === 'annual' ? `
+      <span class="pslot-extra">
+        <label>Discount&nbsp;%</label>
+        <input type="number" value="${slot.annualDiscount}" min="0" max="100" step="0.5"
+          oninput="paymentSlots[${i}].annualDiscount=parseFloat(this.value)||0;renderQuoteTable()"
+          title="Set to 0 to hide discount from quote">
+      </span>` :
+    slot.type === 'finance' ? `
+      <span class="pslot-extra">
+        <label>Term&nbsp;(months)</label>
+        <input type="number" value="${slot.financeMonths}" min="1" max="360" step="1"
+          oninput="paymentSlots[${i}].financeMonths=parseInt(this.value)||36;renderQuoteTable()">
+      </span>` : '';
+
+    return `<div class="pslot-row${isOff?' off':''}">
+      <select style="padding:7px 10px;border:1.5px solid #fcd34d;border-radius:6px;font-size:13px;font-family:inherit;background:#fff;width:100%"
+        onchange="paymentSlots[${i}].type=this.value;renderPaymentSlotEditor();renderQuoteTable()">
+        ${typeOpts}
+      </select>
+      <div class="pslot-extra">${extra}</div>
+      <button class="pslot-del" onclick="removePaymentSlot(${i})" title="Remove this option">&times;</button>
+    </div>`;
+  }).join('');
+}
+
+
+/* ── PAYMENT OPTIONS TABLE (document) ───────────────────────── */
+function renderPaymentOptions(grandTotal) {
+  const wrap = $('paymentOptionsWrap');
+  if (!wrap) { return; }
+  if (!grandTotal) { wrap.innerHTML = ''; return; }
+
+  const isSender = MODE === 'sender';
+
+  // Only show non-off slots
+  const activeSlots = paymentSlots.map((s,i)=>({...s,idx:i})).filter(s=>s.type!=='off');
+
+  if (activeSlots.length === 0) { wrap.innerHTML = ''; return; }
+
+  // ── helpers ──
+  function slotLabel(slot) {
+    if (slot.type==='monthly')   return 'Monthly';
+    if (slot.type==='annual')    return slot.annualDiscount > 0
+      ? `Annual (${slot.annualDiscount}% off)` : 'Annual';
+    if (slot.type==='perpetual') return 'Perpetual License';
+    if (slot.type==='onetime')   return 'One-Time Fee';
+    if (slot.type==='finance')   return `Finance — ${slot.financeMonths} mo.`;
+    return '';
+  }
+
+  function slotNote(slot) {
+    if (slot.type==='monthly')   return 'No long-term commitment';
+    if (slot.type==='annual')    return slot.annualDiscount > 0
+      ? `Save ${slot.annualDiscount}% vs monthly` : 'Paid annually';
+    if (slot.type==='perpetual') return 'One-time upfront payment';
+    if (slot.type==='onetime')   return 'Single payment';
+    if (slot.type==='finance')   return `${slot.financeMonths}-month term`;
+    return '';
+  }
+
+  function slotAmt(slot, base) {
+    if (slot.type==='monthly')   return base;
+    if (slot.type==='annual') {
+      const disc = slot.annualDiscount > 0 ? (1 - slot.annualDiscount/100) : 1;
+      return base * disc;
+    }
+    if (slot.type==='perpetual') return base;
+    if (slot.type==='onetime')   return base;
+    if (slot.type==='finance')   return base / (slot.financeMonths || 36);
+    return base;
+  }
+
+  function slotSuffix(slot) {
+    if (slot.type==='monthly')   return '/mo';
+    if (slot.type==='annual')    return '/yr';
+    if (slot.type==='perpetual') return ' (upfront)';
+    if (slot.type==='onetime')   return '';
+    if (slot.type==='finance')   return `/mo × ${slot.financeMonths}`;
+    return '';
+  }
+
+  // ── build table ──
+  const thCols = activeSlots.map(s =>
+    `<th class="r">${slotLabel(s)}<br><span style="font-size:10px;font-weight:400;color:var(--teal-mid)">${slotNote(s)}</span></th>`
+  ).join('');
+
+  const itemRows = quoteItems.map(item => {
+    const base = item.price * item.count;
+    const cols = activeSlots.map(s => {
+      const a = slotAmt(s, base);
+      return `<td class="r">${fmt(a)}${slotSuffix(s)}</td>`;
+    }).join('');
+    return `<tr><td class="opt-label">${item.name}</td>${cols}</tr>`;
+  }).join('');
+
+  const totalCols = activeSlots.map(s => {
+    const a = slotAmt(s, grandTotal);
+    return `<td class="r opt-total">${fmt(a)}${slotSuffix(s)}</td>`;
+  }).join('');
+
+  wrap.innerHTML = `
+    <div class="payment-matrix">
+      <div class="payment-matrix-head">Payment Options</div>
+      <table class="payment-table">
+        <thead><tr><th>Product / Service</th>${thCols}</tr></thead>
+        <tbody>
+          ${itemRows}
+          <tr style="border-top:2px solid var(--teal)">
+            <td class="opt-total">Total</td>${totalCols}
+          </tr>
+        </tbody>
+      </table>
+    </div>`;
+}
+/* ═══════════════════════════════════════
+   ROI WORKSHEET RECALC
+═══════════════════════════════════════ */
+function recalcROI() {
+  const ms  = Number(v('s_monthly_sales')||50000);
+  const rs  = Number(v('s_roi_stores')||4);
+  const rep = Number(v('s_ring_err')||8);
+  const mp  = Number(v('s_margin_pct')||1);
+  const inv = Number(v('s_inv')||30000);
+  const wg  = Number(v('s_wage')||9);
+  const ch  = Number(v('s_cashiers')||3);
+  const ist = Number(v('s_invest')||21160);
+  const re = ms*(rep/100), mg=ms*(mp/100), it=inv/12, lb=wg*4*ch;
+  const ps=re+mg+it+lb, mt=ps*rs, an=mt*12;
+  const roiX = ist>0?(an/ist).toFixed(1):'∞';
+  const sf=n=>'$'+n.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+  const st=(id,v)=>{const el=$(id);if(el)el.textContent=v;};
+  st('r_ring_err_pct',rep); st('r_sales_disp',sf(ms)); st('r_sales_disp2',sf(ms));
+  st('r_ring_factor',(rep/10).toFixed(1)); st('r_margin_pct',mp);
+  st('r_margin_factor',(mp/10).toFixed(1)); st('r_inv_disp',sf(inv));
+  st('r_wage_disp',sf(wg)); st('r_wage_calc',sf(wg)); st('r_cashiers_disp',ch); st('r_cashiers_calc',ch);
+  st('r_ring_err_val',sf(re)); st('r_margin_val',sf(mg)); st('r_inv_val',sf(it)); st('r_labor_val',sf(lb));
+  st('r_per_store',sf(ps)); st('r_per_store2',sf(ps));
+  ['r_stores_label','r_stores_label2','r_stores_label3'].forEach(id=>st(id,rs));
+  st('r_monthly_total',sf(mt)); st('r_monthly_total2',sf(mt));
+  st('r_annual_total',sf(an)); st('r_invest_disp',sf(ist)); st('r_roi_disp',roiX+' times');
+}
+
+function recalcPricing() { renderQuoteTable(); }
+
+/* ═══════════════════════════════════════
+   SIDEBAR ROI CALCULATOR
+═══════════════════════════════════════ */
+function calcROI() {
+  const sales=Number(v('c_sales')||0), wage=Number(v('c_wage')||0);
+  const id=Number(v('c_inv_day')||0), im=Number(v('c_inv_min')||0);
+  const lo=Number(v('c_lotto')||0), ac=Number(v('c_acc')||0);
+  const tb=Number(v('c_tobacco')||0), iv=Number(v('c_invest')||0);
+  const invL=id*(im/60)*wage*250, lotL=lo*wage*365;
+  const invR=sales*((100-ac)/100)*0.15, tbR=tb*0.035*0.15;
+  const an=invL+lotL+invR+tbR, mo=an/12;
+  const roi=iv>0?an/iv:0, pb=mo>0?iv/mo:0;
+  setText('c_annual', fmt(an));
+  setText('c_monthly','Monthly: '+fmt(mo));
+  setText('c_roi', roi.toFixed(1)+'× ROI');
+  setText('c_payback','Payback: '+pb.toFixed(1)+' months');
+  $('c_breakdown').innerHTML=`
+    <div class="calc-row"><span>Invoice labor</span><span>${fmt(invL)}</span></div>
+    <div class="calc-row"><span>Lottery labor</span><span>${fmt(lotL)}</span></div>
+    <div class="calc-row"><span>Inventory margin</span><span>${fmt(invR)}</span></div>
+    <div class="calc-row"><span>Tobacco rebate</span><span>${fmt(tbR)}</span></div>
+    <div class="calc-divider"></div>
+    <div class="calc-row"><span>Annual total</span><span>${fmt(an)}</span></div>
+    <div class="calc-row"><span>Investment</span><span>${fmt(iv)}</span></div>`;
+  const recs=[];
+  if(invL>3000) recs.push('Invoice automation is a strong driver — ItScans-AI recommended.');
+  if(lotL>4000) recs.push('Lottery labor is significant — LotteryTrak efficiency case.');
+  if(invR>5000) recs.push('Inventory accuracy is a major margin lever — ePB Books + ItScans.');
+  if(tbR>1000)  recs.push('Tobacco rebate program may be leaving value uncaptured.');
+  if(!recs.length) recs.push('Refine inputs above for a more tailored estimate.');
+  $('c_recs').innerHTML=recs.map(r=>`<li>${r}</li>`).join('');
+}
+
+/* ═══════════════════════════════════════
+   ACCEPT QUOTE
+═══════════════════════════════════════ */
+function acceptQuote() {
+  if(MODE==='sender') { alert('Sender preview: connect to share-link or CRM in production.'); return; }
+  alert('Quote accepted. Connect to your hosted acceptance workflow or CRM.');
+}
+
+/* ═══════════════════════════════════════
+   EXPORT RECIPIENT HTML
+═══════════════════════════════════════ */
+function exportRecipientHTML() {
+  // Snapshot the current rendered document
+  // 1. Clone the full document
+  const clone = document.documentElement.cloneNode(true);
+
+  // 2. Remove all sender-only elements
+  clone.querySelectorAll('.sender-only').forEach(el => el.remove());
+  clone.querySelectorAll('#toolbar').forEach(el => el.remove());
+
+  // 3. Remove the export button
+  clone.querySelectorAll('#exportBtn').forEach(el => el.remove());
+
+  // 4. Lock MODE to recipient in the script: replace the script block
+  const scripts = clone.querySelectorAll('script');
+  scripts.forEach(s => {
+    s.textContent = s.textContent
+      .replace("let MODE = 'recipient';", "let MODE = 'recipient'; // LOCKED")
+      .replace("let MODE = 'recipient'; // LOCKED",   "let MODE = 'recipient'; // LOCKED");
+  });
+
+  // 5. Remove the mode toggle button
+  clone.querySelectorAll('#modeToggleBtn').forEach(el => el.remove());
+
+  // 6. Snapshot current quoteItems into a script tag so recipient sees the same items
+  const snapScript = clone.ownerDocument.createElement('script');
+  const discPct = parseFloat(v('s_discount')||0);
+  const credit  = parseFloat(v('s_credit')||0);
+  const payCnt  = parseInt(v('s_paymentCount')||3);
+  snapScript.textContent = `
+    // Recipient snapshot — injected at export time
+    window._SNAPSHOT = ${JSON.stringify({ quoteItems, discountPct: discPct, credit, paymentCount: payCnt })};
+  `;
+  clone.querySelector('head').appendChild(snapScript);
+
+  // 7. Add init override so recipient loads from snapshot
+  const overrideScript = clone.ownerDocument.createElement('script');
+  overrideScript.textContent = `
+    document.addEventListener('DOMContentLoaded', function() {
+      if(window._SNAPSHOT) {
+        quoteItems = _SNAPSHOT.quoteItems;
+        nextItemId = quoteItems.length + 1;
+        if($('s_discount')) $('s_discount').value = _SNAPSHOT.discountPct;
+        if($('s_credit'))   $('s_credit').value   = _SNAPSHOT.credit;
+        if($('s_paymentCount')) $('s_paymentCount').value = _SNAPSHOT.paymentCount;
+      }
+      MODE = 'recipient';
+      applyMode(); syncDoc(); renderQuoteTable(); recalcROI(); calcROI(); updateExpiry();
+    });
+  `;
+  clone.querySelector('head').appendChild(overrideScript);
+
+  // 8. Serialize and download
+  const html = '<!DOCTYPE html>\n' + clone.outerHTML;
+  const blob = new Blob([html], {type:'text/html'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  const custName = (v('s_name')||'recipient').replace(/\s+/g,'-').toLowerCase();
+  a.href     = url;
+  a.download = `ss-proposal-${custName}.html`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+
+/* ═══════════════════════════════════════
+   INIT
+═══════════════════════════════════════ */
+function init() {
+  const today  = new Date();
+  const iso    = d => d.toISOString().split('T')[0];
+  const expiry = new Date(); expiry.setDate(expiry.getDate()+30);
+  const di = $('s_date'), de = $('s_expiry');
+  if(di && !di.value) di.value = iso(today);
+  if(de && !de.value) de.value = iso(expiry);
+
+  renderCatalogGrid();
+  renderPaymentSlotEditor();
+  renderBuilderItemList();
+  applyMode();
+  syncDoc();
+  renderQuoteTable();
+  recalcROI();
+  calcROI();
+  updateExpiry();
+}
+
+init();
+</script>
+
+
+</body></html>

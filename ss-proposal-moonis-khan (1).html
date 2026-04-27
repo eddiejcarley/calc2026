@@ -2051,14 +2051,10 @@ function renderPaymentSlotEditor() {
 /* ── PAYMENT OPTIONS TABLE (document) ───────────────────────── */
 function renderPaymentOptions(grandTotal) {
   const wrap = $('paymentOptionsWrap');
-  if (!wrap) { return; }
-  if (!grandTotal) { wrap.innerHTML = ''; return; }
+  if (!wrap) return;
+  if (!grandTotal || quoteItems.length === 0) { wrap.innerHTML = ''; return; }
 
-  const isSender = MODE === 'sender';
-
-  // Only show non-off slots
-  const activeSlots = paymentSlots.map((s,i)=>({...s,idx:i})).filter(s=>s.type!=='off');
-
+  const activeSlots = paymentSlots.map((s,i) => ({...s, idx:i})).filter(s => s.type !== 'off');
   if (activeSlots.length === 0) { wrap.innerHTML = ''; return; }
 
   // ── helpers ──
@@ -2071,7 +2067,6 @@ function renderPaymentOptions(grandTotal) {
     if (slot.type==='finance')   return `Finance — ${slot.financeMonths} mo.`;
     return '';
   }
-
   function slotNote(slot) {
     if (slot.type==='monthly')   return 'No long-term commitment';
     if (slot.type==='annual')    return slot.annualDiscount > 0
@@ -2081,7 +2076,6 @@ function renderPaymentOptions(grandTotal) {
     if (slot.type==='finance')   return `${slot.financeMonths}-month term`;
     return '';
   }
-
   function slotAmt(slot, base) {
     if (slot.type==='monthly')   return base;
     if (slot.type==='annual') {
@@ -2093,7 +2087,6 @@ function renderPaymentOptions(grandTotal) {
     if (slot.type==='finance')   return base / (slot.financeMonths || 36);
     return base;
   }
-
   function slotSuffix(slot) {
     if (slot.type==='monthly')   return '/mo';
     if (slot.type==='annual')    return '/yr';
@@ -2103,38 +2096,47 @@ function renderPaymentOptions(grandTotal) {
     return '';
   }
 
-  // ── build table ──
-  const thCols = activeSlots.map(s =>
-    `<th class="r">${slotLabel(s)}<br><span style="font-size:10px;font-weight:400;color:var(--teal-mid)">${slotNote(s)}</span></th>`
-  ).join('');
+  // ── split slots and items by billing category ──
+  const recurringSlots  = activeSlots.filter(s => ['monthly','annual','finance'].includes(s.type));
+  const perpetualSlots  = activeSlots.filter(s => ['perpetual','onetime'].includes(s.type));
 
-  const itemRows = quoteItems.map(item => {
-    const base = item.price * item.count;
-    const cols = activeSlots.map(s => {
-      const a = slotAmt(s, base);
-      return `<td class="r">${fmt(a)}${slotSuffix(s)}</td>`;
+  const subscriptionItems = quoteItems.filter(i => i.license === 'subscription');
+  const perpetualItems    = quoteItems.filter(i =>
+    i.license === 'perpetual' || i.license === 'onetime' || i.cycle === 'onetime'
+  );
+
+  function buildTable(slots, items, title) {
+    if (slots.length === 0 || items.length === 0) return '';
+    const subtotal = items.reduce((s, i) => s + i.price * i.count, 0);
+    const thCols = slots.map(s =>
+      `<th class="r">${slotLabel(s)}<br><span style="font-size:10px;font-weight:400;color:var(--teal-mid)">${slotNote(s)}</span></th>`
+    ).join('');
+    const rows = items.map(item => {
+      const base = item.price * item.count;
+      const cols = slots.map(s => `<td class="r">${fmt(slotAmt(s, base))}${slotSuffix(s)}</td>`).join('');
+      return `<tr><td class="opt-label">${item.name}</td>${cols}</tr>`;
     }).join('');
-    return `<tr><td class="opt-label">${item.name}</td>${cols}</tr>`;
-  }).join('');
+    const totalCols = slots.map(s =>
+      `<td class="r opt-total">${fmt(slotAmt(s, subtotal))}${slotSuffix(s)}</td>`
+    ).join('');
+    return `
+      <div class="payment-matrix" style="margin-top:16px">
+        <div class="payment-matrix-head">${title}</div>
+        <table class="payment-table">
+          <thead><tr><th>Product / Service</th>${thCols}</tr></thead>
+          <tbody>
+            ${rows}
+            <tr style="border-top:2px solid var(--teal)">
+              <td class="opt-total">Total</td>${totalCols}
+            </tr>
+          </tbody>
+        </table>
+      </div>`;
+  }
 
-  const totalCols = activeSlots.map(s => {
-    const a = slotAmt(s, grandTotal);
-    return `<td class="r opt-total">${fmt(a)}${slotSuffix(s)}</td>`;
-  }).join('');
-
-  wrap.innerHTML = `
-    <div class="payment-matrix">
-      <div class="payment-matrix-head">Payment Options</div>
-      <table class="payment-table">
-        <thead><tr><th>Product / Service</th>${thCols}</tr></thead>
-        <tbody>
-          ${itemRows}
-          <tr style="border-top:2px solid var(--teal)">
-            <td class="opt-total">Total</td>${totalCols}
-          </tr>
-        </tbody>
-      </table>
-    </div>`;
+  wrap.innerHTML =
+    buildTable(recurringSlots, subscriptionItems, 'Monthly / Annual Billing') +
+    buildTable(perpetualSlots, perpetualItems,    'Perpetual / One-Time');
 }
 /* ═══════════════════════════════════════
    ROI WORKSHEET RECALC
